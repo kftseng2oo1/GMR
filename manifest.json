@@ -1,6 +1,6 @@
 {
-  "name": "GOOD MORNING",
-  "short_name": "GOOD MORNING",
+  "name": "good morning",
+  "short_name": "good morning",
   "description": "",
   "start_url": "/GMR/",
   "scope": "/GMR/",
@@ -14,8 +14,8 @@
   ],
   "shortcuts": [
     {
-      "name": "開啟 GOOD MORNING",
-      "short_name": "GOOD MORNING",
+      "name": "開啟 good morning",
+      "short_name": "good morning",
       "url": "/GMR/",
       "icons": [
         {

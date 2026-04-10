@@ -377,7 +377,7 @@ input[type=range]::-webkit-slider-thumb{
 /* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 </style>
-<meta name="application-name" content="GOOD MORNING"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="GOOD MORNING"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
+<meta name="application-name" content="good morning"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="good morning"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
@@ -552,6 +552,14 @@ input[type=range]::-webkit-slider-thumb{
       <div class="toggle-row">
         <span>顯示今日日期</span>
         <label class="toggle"><input type="checkbox" id="tog-date" checked=""><span class="knob"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>外框線</span>
+        <label class="toggle"><input type="checkbox" id="tog-border"><span class="knob"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>文字分隔線</span>
+        <label class="toggle"><input type="checkbox" id="tog-divider"><span class="knob"></span></label>
       </div>
     </div>
   </div>
@@ -817,6 +825,8 @@ let state = {
   date: true,
   elder: false,
   plate: 'dark',   // 'none' | 'dark' | 'light' | 'blur' | 'gold'
+  border: false,    // 外框線
+  divider: false,   // 中間分隔線
 };
 
 // ═══════════════════════════════════════════
@@ -1380,6 +1390,8 @@ document.querySelectorAll('.dir-btn').forEach(btn=>{
 // ── Toggles ──
 document.getElementById('tog-shadow').addEventListener('change',e=>{state.shadow=e.target.checked;draw();});
 document.getElementById('tog-date').addEventListener('change',e=>{state.date=e.target.checked;draw();});
+document.getElementById('tog-border').addEventListener('change',e=>{state.border=e.target.checked;draw();});
+document.getElementById('tog-divider').addEventListener('change',e=>{state.divider=e.target.checked;draw();});
 
 // ── Elder mode ──
 const elderCheck=document.getElementById('elder-check');
@@ -1437,6 +1449,7 @@ function draw(){
 }
 
 function drawBorder(){
+  if(!state.border) return;
   const m=36;
   ctx.save();
   ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=2;ctx.strokeRect(m,m,CW-m*2,CH-m*2);
@@ -1455,6 +1468,7 @@ function setShadow(on){
 }
 
 function drawDivider(y){
+  if(!state.divider) return;
   ctx.save();ctx.shadowColor='transparent';ctx.shadowBlur=0;
   ctx.strokeStyle=state.color;ctx.lineWidth=1.5;ctx.globalAlpha=0.45;
   const lw=190;ctx.beginPath();ctx.moveTo(CW/2-lw,y);ctx.lineTo(CW/2+lw,y);ctx.stroke();
