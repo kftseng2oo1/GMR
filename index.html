@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head><!-- PWA Meta — auto-injected by PWA 打包神器 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+
+
+<title>Icon Generator Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Syne:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d0f14; --sur:#13161d; --sur2:#1a1e27; --sur3:#212633;
+  --bd:rgba(255,255,255,0.07); --bdhv:rgba(255,255,255,0.14);
+  --acc:#7c6dfa; --txt:#e8eaf0; --txt2:#8892a4; --txt3:#4d5566;
+  --r:8px;
+  --sft: env(safe-area-inset-top,0px);
+  --sfb: env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  font-family:'Syne',sans-serif;background:var(--bg);color:var(--txt);
+  display:flex;flex-direction:column;min-height:100vh;
+  padding-top:var(--sft);
+}
+
+/* topbar */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;background:var(--sur);border-bottom:1px solid var(--bd);
+  flex-shrink:0;
+}
+.topbar-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:9px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
+.topbar-badge{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3);letter-spacing:.08em;text-transform:uppercase}
+
+/* layout */
+.main{display:flex;flex:1;min-height:0;overflow:hidden}
+
+/* controls */
+.ctrl{
+  width:300px;min-width:260px;
+  background:var(--sur);border-right:1px solid var(--bd);
+  overflow-y:auto;overflow-x:hidden;
+  padding:16px;display:flex;flex-direction:column;gap:0;
+  -webkit-overflow-scrolling:touch;
+}
+.ctrl::-webkit-scrollbar{width:3px}
+.ctrl::-webkit-scrollbar-thumb{background:var(--sur3);border-radius:2px}
+
+/* section label */
+.sec{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--txt3);
+  margin:14px 0 8px;display:flex;align-items:center;gap:8px;
+}
+.sec::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* field */
+.fld{margin-bottom:10px}
+.flb{
+  font-size:11px;font-weight:600;color:var(--txt2);
+  margin-bottom:5px;display:flex;justify-content:space-between;
+}
+.flb em{font-style:normal;font-family:'DM Mono',monospace;color:var(--acc);font-size:10px}
+
+/* range */
+input[type=range]{
+  width:100%;height:4px;-webkit-appearance:none;
+  background:var(--sur3);border-radius:4px;outline:none;cursor:pointer;
+  padding:12px 0;margin:-12px 0;background-clip:content-box;display:block;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:var(--acc);box-shadow:0 0 8px rgba(124,109,250,.5);cursor:pointer;
+}
+
+/* color field */
+.colf{
+  display:flex;align-items:center;gap:8px;
+  background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r);
+  padding:8px 10px;cursor:pointer;min-height:44px;
+}
+.colf:active{border-color:var(--bdhv)}
+.swch{
+  width:20px;height:20px;border-radius:4px;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.15);position:relative;overflow:hidden;
+}
+.swch input[type=color]{
+  position:absolute;inset:-4px;opacity:0;cursor:pointer;width:140%;height:140%;
+}
+.chex{font-family:'DM Mono',monospace;font-size:11px;color:var(--txt2);flex:1}
+
+/* toggle row */
+.togrow{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px;background:var(--sur2);border:1px solid var(--bd);
+  border-radius:var(--r);cursor:pointer;min-height:44px;user-select:none;
+}
+.togl{width:36px;height:20px;background:var(--sur3);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
+.togl.on{background:var(--acc)}
+.togl::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+.togl.on::after{transform:translateX(16px)}
+
+/* pill row */
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pil{
+  padding:7px 12px;background:var(--sur2);border:1px solid var(--bd);
+  border-radius:20px;font-size:11px;font-weight:600;color:var(--txt2);
+  cursor:pointer;user-select:none;min-height:36px;display:flex;align-items:center;
+  transition:all .15s;
+}
+.pil.on{background:rgba(124,109,250,.15);border-color:var(--acc);color:var(--acc)}
+
+/* text input */
+input[type=text]{
+  width:100%;padding:10px;background:var(--sur2);
+  border:1px solid var(--bd);border-radius:var(--r);
+  color:var(--txt);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+  text-align:center;outline:none;min-height:44px;
+}
+input[type=text]:focus{border-color:var(--acc)}
+
+/* shape grid */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.sbtn{
+  aspect-ratio:1;background:var(--sur2);border:1px solid var(--bd);
+  border-radius:var(--r);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;padding:5px 3px;
+  cursor:pointer;user-select:none;transition:all .15s;
+}
+.sbtn.on{border-color:var(--acc);background:rgba(124,109,250,.12)}
+.sbtn svg{width:22px;height:22px}
+.slbl{font-size:8px;font-family:'DM Mono',monospace;color:var(--txt3);text-align:center}
+.sbtn.on .slbl{color:var(--acc)}
+
+/* actions */
+.acts{margin-top:16px;display:flex;flex-direction:column;gap:8px;padding-bottom:12px}
+.btn{
+  padding:14px;border:none;border-radius:var(--r);
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px;min-height:48px;
+}
+.btn:active{opacity:.85;transform:scale(.97)}
+.btnp{background:var(--acc);color:#fff;box-shadow:0 4px 16px rgba(124,109,250,.3)}
+.btns{background:var(--sur2);color:var(--txt2);border:1px solid var(--bd)}
+
+/* preview */
+.prev{flex:1;display:flex;flex-direction:column;background:var(--bg);overflow:hidden;min-width:0}
+.prevtb{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:var(--sur);border-bottom:1px solid var(--bd);flex-shrink:0;flex-wrap:wrap;
+}
+.prevlb{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase}
+.bgrow{display:flex;gap:5px;margin-left:auto}
+.bgpil{
+  padding:5px 10px;border-radius:20px;font-size:10px;font-family:'DM Mono',monospace;
+  cursor:pointer;border:1px solid transparent;color:var(--txt3);user-select:none;
+  min-height:30px;display:flex;align-items:center;
+}
+.bgpil.on{background:var(--sur2);border-color:var(--bd);color:var(--txt)}
+
+.stage{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:24px;padding:24px 16px;transition:background .3s;overflow:hidden;
+}
+.stage.dark{background:#0d0f14}
+.stage.mid{background:#3a3a4a}
+.stage.lite{background:#e8eaf0}
+.stage.wht{background:#fff}
+
+#svgMain{filter:drop-shadow(0 16px 48px rgba(0,0,0,.6));max-width:100%;height:auto}
+
+.szrow{display:flex;align-items:flex-end;gap:14px}
+.szitem{display:flex;flex-direction:column;align-items:center;gap:5px}
+.szlb{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3)}
+
+.infobar{
+  display:flex;align-items:center;gap:14px;padding:7px 14px;
+  background:var(--sur);border-top:1px solid var(--bd);flex-shrink:0;flex-wrap:wrap;
+  padding-bottom:calc(7px + var(--sfb));
+}
+.inf{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3);display:flex;gap:5px}
+.inf b{font-weight:400;color:var(--txt2)}
+
+/* toast */
+.toast{
+  position:fixed;bottom:calc(20px + var(--sfb));left:50%;
+  transform:translateX(-50%) translateY(60px);
+  background:var(--sur2);border:1px solid var(--bd);color:var(--txt);
+  padding:10px 18px;border-radius:30px;font-size:12px;font-weight:600;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  z-index:1000;white-space:nowrap;pointer-events:none;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* mobile */
+@media(max-width:640px){
+  .main{flex-direction:column}
+  .ctrl{width:100%;min-width:0;border-right:none;border-bottom:1px solid var(--bd);max-height:58vh}
+  .prev{min-height:38vh}
+  .szrow{display:none}
+  .topbar-badge{display:none}
+}
+</style>
+<meta name="application-name" content="早安您好"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="早安您好"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(r => console.log('[SW] registered:', r.scope))
+        .catch(e => console.warn('[SW] registration failed:', e));
+    });
+  }</script></head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title"><div class="dot"></div>Icon Generator Pro</div>
+  <div class="topbar-badge">SVG · 24px Grid</div>
+</div>
+
+<div class="main">
+
+  <!-- ── Controls ── -->
+  <div class="ctrl">
+
+    <div class="sec">底座 Base</div>
+
+    <!-- show circle toggle -->
+    <div class="fld">
+      <div class="togrow" id="tog-showCircle">
+        <span style="font-size:12px;font-weight:600;color:var(--txt2)">外圍底座</span>
+        <div class="togl on"></div>
+      </div>
+    </div>
+
+    <!-- base color -->
+    <div class="fld">
+      <div class="flb">底座顏色</div>
+      <div class="colf" id="wrap-circleColor">
+        <div class="swch" style="background:#8d8eff"><input type="color" id="circleColor" value="#8d8eff"></div>
+        <div class="chex" id="hex-circleColor">#8D8EFF</div>
+      </div>
+    </div>
+
+    <!-- corner radius -->
+    <div class="fld">
+      <div class="flb">圓角 <em id="v-corner">2</em></div>
+      <input type="range" id="r-corner" min="0" max="45" step="1" value="2">
+    </div>
+
+    <!-- stroke width -->
+    <div class="fld">
+      <div class="flb">描邊寬度 <em id="v-stroke">0.0</em></div>
+      <input type="range" id="r-stroke" min="0" max="2" step="0.1" value="0">
+    </div>
+
+    <!-- stroke color -->
+    <div class="fld">
+      <div class="flb">描邊顏色</div>
+      <div class="colf" id="wrap-strokeColor">
+        <div class="swch" style="background:#ffffff"><input type="color" id="strokeColor" value="#ffffff"></div>
+        <div class="chex" id="hex-strokeColor">#FFFFFF</div>
+      </div>
+    </div>
+
+    <div class="sec">幾何層 Geo</div>
+
+    <!-- geo style pills -->
+    <div class="fld">
+      <div class="flb">樣式</div>
+      <div class="pills" id="pills-geoStyle">
+        <div class="pil on" data-v="star">星形</div>
+        <div class="pil" data-v="poly">多邊形</div>
+        <div class="pil" data-v="ring">環形</div>
+        <div class="pil" data-v="none">隱藏</div>
+      </div>
+    </div>
+
+    <!-- grad start -->
+    <div class="fld">
+      <div class="flb">漸層起始</div>
+      <div class="colf" id="wrap-gradStart">
+        <div class="swch" style="background:#D4D486"><input type="color" id="gradStart" value="#D4D486"></div>
+        <div class="chex" id="hex-gradStart">#D4D486</div>
+      </div>
+    </div>
+
+    <!-- grad end -->
+    <div class="fld">
+      <div class="flb">漸層結束</div>
+      <div class="colf" id="wrap-gradEnd">
+        <div class="swch" style="background:#808000"><input type="color" id="gradEnd" value="#808000"></div>
+        <div class="chex" id="hex-gradEnd">#808000</div>
+      </div>
+    </div>
+
+    <!-- points -->
+    <div class="fld">
+      <div class="flb">頂點數 <em id="v-pts">8</em></div>
+      <input type="range" id="r-pts" min="3" max="20" step="1" value="8">
+    </div>
+
+    <!-- ratio -->
+    <div class="fld">
+      <div class="flb">內縮比例 <em id="v-ratio">0.70</em></div>
+      <input type="range" id="r-ratio" min="0.2" max="1.0" step="0.05" value="0.7">
+    </div>
+
+    <!-- rotation -->
+    <div class="fld">
+      <div class="flb">旋轉 <em id="v-rot">0</em>°</div>
+      <input type="range" id="r-rot" min="0" max="360" step="1" value="0">
+    </div>
+
+    <div class="sec">核心 Core</div>
+
+    <!-- core type pills -->
+    <div class="fld">
+      <div class="flb">類型</div>
+      <div class="pills" id="pills-coreType">
+        <div class="pil" data-v="icon">圖案</div>
+        <div class="pil on" data-v="text">文字</div>
+        <div class="pil" data-v="none">隱藏</div>
+      </div>
+    </div>
+
+    <!-- icon box -->
+    <div id="box-icon" style="display:none">
+      <div class="fld">
+        <div class="sgrid" id="shapeGrid"></div>
+      </div>
+      <div class="fld">
+        <div class="flb">填充顏色</div>
+        <div class="colf" id="wrap-iconColor">
+          <div class="swch" style="background:#FFFF00"><input type="color" id="iconColor" value="#FFFF00"></div>
+          <div class="chex" id="hex-iconColor">#FFFF00</div>
+        </div>
+      </div>
+      <div class="fld">
+        <div class="flb">尺寸 <em id="v-isize">0.45</em></div>
+        <input type="range" id="r-isize" min="0.2" max="0.9" step="0.01" value="0.45">
+      </div>
+      <div class="fld">
+        <div class="flb">垂直偏移 <em id="v-iy">0.0</em></div>
+        <input type="range" id="r-iy" min="-3" max="3" step="0.1" value="0">
+      </div>
+      <div class="fld">
+        <div class="togrow" id="tog-iconShadow">
+          <span style="font-size:12px;font-weight:600;color:var(--txt2)">陰影效果</span>
+          <div class="togl"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- text box -->
+    <div id="box-text">
+      <div class="fld">
+        <div class="flb">文字內容</div>
+        <input type="text" id="innerText" value="AA" maxlength="3">
+      </div>
+      <div class="fld">
+        <div class="flb">文字顏色</div>
+        <div class="colf" id="wrap-textColor">
+          <div class="swch" style="background:#FFFFFF"><input type="color" id="textColor" value="#FFFFFF"></div>
+          <div class="chex" id="hex-textColor">#FFFFFF</div>
+        </div>
+      </div>
+      <div class="fld">
+        <div class="flb">字體大小 <em id="v-fs">6</em></div>
+        <input type="range" id="r-fs" min="2" max="12" step="0.5" value="6">
+      </div>
+    </div>
+
+    <div class="acts">
+      <button class="btn btnp" id="btn-copy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+        複製 SVG 代碼
+      </button>
+      <button class="btn btns" id="btn-dl">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        下載 512px SVG
+      </button>
+    </div>
+
+  </div><!-- /ctrl -->
+
+  <!-- ── Preview ── -->
+  <div class="prev">
+    <div class="prevtb">
+      <div class="prevlb">預覽</div>
+      <div class="bgrow" id="bgrow">
+        <div class="bgpil on" data-v="dark">暗</div>
+        <div class="bgpil" data-v="mid">灰</div>
+        <div class="bgpil" data-v="lite">淺</div>
+        <div class="bgpil" data-v="wht">白</div>
+      </div>
+    </div>
+
+    <div class="stage dark" id="stage">
+      <svg id="svgMain" width="220" height="220" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" id="sStart" stop-color="#D4D486"></stop>
+            <stop offset="100%" id="sEnd" stop-color="#808000"></stop>
+          </linearGradient>
+          <filter id="fShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="0.5" stdDeviation="0.8" flood-color="rgba(0,0,0,0.7)"></feDropShadow>
+          </filter>
+        </defs>
+        <rect id="elRect" x="0.5" y="0.5" width="23" height="23" rx="0.5" ry="0.5" fill="#8d8eff"></rect>
+        <circle id="elCirc" cx="12" cy="12" r="11.5" fill="#8d8eff" style="display:none"></circle>
+        <path id="elGeo" d="" fill="url(#g1)"></path>
+        <g id="elSlot"></g>
+      </svg>
+
+      <div class="szrow" id="szrow"></div>
+    </div>
+
+    <div class="infobar">
+      <div class="inf">座標系 <b>24×24</b></div>
+      <div class="inf">輸出 <b>512px</b></div>
+      <div class="inf">格式 <b>SVG</b></div>
+      <div class="inf">頂點 <b id="inf-pts">–</b></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SHAPES
+// ═══════════════════════════════════════════════════════════════
+var SHP = {
+  triangle: {d:'M12,3 L21.5,20.5 H2.5 Z',          lbl:'三角', dx:0, dy:-0.4},
+  square:   {d:'M4,4H20V20H4Z',                      lbl:'方形', dx:0, dy:0},
+  circle:   {d:'M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Z', lbl:'圓形', dx:0, dy:0},
+  star5:    {d:'M12,2 L14.4,9.2H22L16,13.8 18.4,21 12,16.4 5.6,21 8,13.8 2,9.2H9.6Z', lbl:'五星', dx:0, dy:0},
+  star6:    {d:'M12,2 L14.196,7.804 20,6 16.196,11 20,16 14.196,14.196 12,20 9.804,14.196 4,16 7.804,11 4,6 9.804,7.804Z', lbl:'六芒', dx:0, dy:0},
+  diamond:  {d:'M12,1 L23,12 12,23 1,12Z',           lbl:'菱形', dx:0, dy:0},
+  heart:    {d:'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z', lbl:'愛心', dx:0, dy:0},
+  bolt:     {d:'M7,2v11h3v9l7-12h-4l4-8H7z',         lbl:'閃電', dx:0, dy:0},
+  moon:     {d:'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z', lbl:'月亮', dx:0, dy:0},
+  cross:    {d:'M10,2V10H2V14H10V22H14V14H22V10H14V2Z', lbl:'十字', dx:0, dy:0},
+  shield:   {d:'M12,2L3,7v5c0,5.55 3.84,10.74 9,12 5.16-1.26 9-6.45 9-12V7L12,2Z', lbl:'盾牌', dx:0, dy:0},
+  crown:    {d:'M2 19h20l-2-8-4 4-4-8-4 8-4-4-2 8Z', lbl:'皇冠', dx:0, dy:0}
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE — single source of truth, all typed correctly
+// ═══════════════════════════════════════════════════════════════
+var G = {
+  showCircle:  true,
+  circleColor: '#8d8eff',
+  corner:      2,
+  strokeW:     0,
+  strokeColor: '#ffffff',
+  gradStart:   '#D4D486',
+  gradEnd:     '#808000',
+  geoStyle:    'star',
+  pts:         8,
+  ratio:       0.70,
+  rot:         0,
+  coreType:    'text',
+  shape:       'triangle',
+  iconColor:   '#FFFF00',
+  iconSize:    0.45,
+  iconY:       0,
+  iconShadow:  false,
+  txt:         'AA',
+  txtColor:    '#FFFFFF',
+  fontSize:    6
+};
+
+// ═══════════════════════════════════════════════════════════════
+// GEO PATH — pure function, guaranteed integer pts
+// ═══════════════════════════════════════════════════════════════
+function geoPath(pts, ratio, rot, style) {
+  pts = pts | 0; // bitwise OR → integer conversion, fast
+  var cx=12, cy=12, rOut=8.5;
+  if (style === 'none') return '';
+  if (style === 'ring') {
+    var rIn = rOut * ratio;
+    return 'M '+(cx+rOut)+','+cy+
+           ' A '+rOut+','+rOut+' 0 1 0 '+(cx-rOut)+','+cy+
+           ' A '+rOut+','+rOut+' 0 1 0 '+(cx+rOut)+','+cy+' Z'+
+           ' M '+(cx+rIn)+','+cy+
+           ' A '+rIn+','+rIn+' 0 1 1 '+(cx-rIn)+','+cy+
+           ' A '+rIn+','+rIn+' 0 1 1 '+(cx+rIn)+','+cy+' Z';
+  }
+  var star = style === 'star';
+  var count = star ? pts*2 : pts;
+  var rotR = rot * Math.PI / 180;
+  var d = '';
+  for (var i=0; i<count; i++) {
+    var a = (Math.PI*2/count)*i - Math.PI/2 + rotR;
+    var r = (star && i%2===1) ? rOut*ratio : rOut;
+    d += (i===0?'M':'L') + (cx + r*Math.cos(a)).toFixed(3)+','+(cy + r*Math.sin(a)).toFixed(3);
+  }
+  return d+'Z';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+var NS = 'http://www.w3.org/2000/svg';
+
+function render() {
+  // gradient
+  document.getElementById('sStart').setAttribute('stop-color', G.gradStart);
+  document.getElementById('sEnd').setAttribute('stop-color',   G.gradEnd);
+
+  // base shape
+  var rect = document.getElementById('elRect');
+  var circ = document.getElementById('elCirc');
+  var useCirc = G.corner >= 45;
+  rect.style.display = (!useCirc && G.showCircle) ? '' : 'none';
+  circ.style.display = (useCirc  && G.showCircle) ? '' : 'none';
+  var base = useCirc ? circ : rect;
+  base.setAttribute('fill', G.circleColor);
+  if (!useCirc) {
+    base.setAttribute('rx', (G.corner * 0.28).toFixed(2));
+    base.setAttribute('ry', (G.corner * 0.28).toFixed(2));
+  }
+  if (G.strokeW > 0) {
+    base.setAttribute('stroke', G.strokeColor);
+    base.setAttribute('stroke-width', G.strokeW);
+  } else {
+    base.removeAttribute('stroke');
+    base.removeAttribute('stroke-width');
+  }
+
+  // geo
+  var geo = document.getElementById('elGeo');
+  var d = geoPath(G.pts, G.ratio, G.rot, G.geoStyle);
+  geo.setAttribute('d', d);
+  geo.style.display = d ? '' : 'none';
+
+  // info pts
+  var infPts = document.getElementById('inf-pts');
+  if (G.geoStyle === 'none') infPts.textContent = '–';
+  else infPts.textContent = G.geoStyle==='star' ? G.pts*2 : G.pts;
+
+  // slot
+  var slot = document.getElementById('elSlot');
+  slot.innerHTML = '';
+  if (G.coreType === 'icon') {
+    var sd = SHP[G.shape];
+    if (sd) {
+      var p = document.createElementNS(NS,'path');
+      p.setAttribute('d', sd.d);
+      p.setAttribute('fill', G.iconColor);
+      if (G.iconShadow) p.setAttribute('filter','url(#fShadow)');
+      var sc = G.iconSize;
+      var xo = 12*(1-sc) + sd.dx;
+      var yo = 12*(1-sc) + sd.dy + G.iconY;
+      p.setAttribute('transform','translate('+xo.toFixed(3)+','+yo.toFixed(3)+') scale('+sc+')');
+      slot.appendChild(p);
+    }
+  } else if (G.coreType === 'text') {
+    var t = document.createElementNS(NS,'text');
+    t.setAttribute('x','12'); t.setAttribute('y','12'); t.setAttribute('dy','0.38em');
+    t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','900');
+    // Auto-scale by char count: 1 char=full size, 2 chars≈71%, 3 chars≈55%
+    var len = G.txt.length || 1;
+    var autoSize = (G.fontSize / Math.pow(len, 0.52)).toFixed(2);
+    t.setAttribute('font-size', autoSize);
+    t.setAttribute('fill', G.txtColor);
+    t.textContent = G.txt;
+    slot.appendChild(t);
+  }
+
+  // shape grid icon color sync
+  document.querySelectorAll('#shapeGrid .sbtn svg path').forEach(function(p){
+    p.setAttribute('fill', G.iconColor);
+  });
+
+  renderSizes();
+}
+
+function renderSizes() {
+  var row = document.getElementById('szrow');
+  row.innerHTML = '';
+  [64,32,16].forEach(function(sz){
+    var cl = document.getElementById('svgMain').cloneNode(true);
+    cl.setAttribute('width',sz); cl.setAttribute('height',sz);
+    cl.removeAttribute('id');
+    cl.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id')});
+    var item = document.createElement('div');
+    item.className = 'szitem';
+    var lbl = document.createElement('div');
+    lbl.className = 'szlb'; lbl.textContent = sz+'px';
+    item.appendChild(cl); item.appendChild(lbl);
+    row.appendChild(item);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 2200);
+}
+
+function exportSVG() {
+  var cl = document.getElementById('svgMain').cloneNode(true);
+  cl.setAttribute('width','512'); cl.setAttribute('height','512');
+  return cl.outerHTML;
+}
+
+// iOS-safe copy
+function copySVG() {
+  var s = exportSVG();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(s).then(function(){ toast('✓ SVG 已複製'); }).catch(function(){ fallbackCopy(s); });
+  } else { fallbackCopy(s); }
+}
+function fallbackCopy(s) {
+  var ta = document.createElement('textarea');
+  ta.value = s; ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); toast('✓ SVG 已複製'); } catch(e){ toast('⚠ 請手動複製'); }
+  document.body.removeChild(ta);
+}
+
+// iOS-safe download
+function dlSVG() {
+  var s = exportSVG();
+  var b64 = btoa(unescape(encodeURIComponent(s)));
+  var a = document.createElement('a');
+  a.href = 'data:image/svg+xml;base64,'+b64;
+  a.download = 'icon-512.svg';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('✓ icon-512.svg 下載中');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT — runs after DOM ready
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+
+  // ── Shape grid ───────────────────────────────────────────────
+  var grid = document.getElementById('shapeGrid');
+  Object.keys(SHP).forEach(function(key) {
+    var sh = SHP[key];
+    var btn = document.createElement('div');
+    btn.className = 'sbtn' + (key===G.shape ? ' on' : '');
+    btn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="'+G.iconColor+'" xmlns="http://www.w3.org/2000/svg"><path d="'+sh.d+'"/></svg>'+
+      '<div class="slbl">'+sh.lbl+'</div>';
+    btn.addEventListener('pointerup', function(e){
+      e.preventDefault();
+      document.querySelectorAll('#shapeGrid .sbtn').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      G.shape = key;
+      render();
+    });
+    grid.appendChild(btn);
+  });
+
+  // ── Pill rows ────────────────────────────────────────────────
+  function initPills(rowId, stateKey, cb) {
+    var row = document.getElementById(rowId);
+    row.addEventListener('pointerup', function(e) {
+      var el = e.target;
+      // walk up to find .pil
+      while (el && el !== row) {
+        if (el.classList && el.classList.contains('pil')) {
+          e.preventDefault();
+          row.querySelectorAll('.pil').forEach(function(p){ p.classList.remove('on'); });
+          el.classList.add('on');
+          G[stateKey] = el.getAttribute('data-v');
+          if (cb) cb(G[stateKey]);
+          render();
+          return;
+        }
+        el = el.parentElement;
+      }
+    });
+  }
+
+  initPills('pills-geoStyle', 'geoStyle');
+  initPills('pills-coreType', 'coreType', function(v){
+    document.getElementById('box-icon').style.display = v==='icon' ? 'block' : 'none';
+    document.getElementById('box-text').style.display = v==='text' ? 'block' : 'none';
+  });
+
+  // bg pills
+  var bgrow = document.getElementById('bgrow');
+  bgrow.addEventListener('pointerup', function(e){
+    var el = e.target;
+    while (el && el !== bgrow) {
+      if (el.classList && el.classList.contains('bgpil')) {
+        e.preventDefault();
+        bgrow.querySelectorAll('.bgpil').forEach(function(p){ p.classList.remove('on'); });
+        el.classList.add('on');
+        document.getElementById('stage').className = 'stage ' + el.getAttribute('data-v');
+        return;
+      }
+      el = el.parentElement;
+    }
+  });
+
+  // ── Toggles ──────────────────────────────────────────────────
+  function initToggle(rowId, stateKey) {
+    var row = document.getElementById(rowId);
+    var dot = row.querySelector('.togl');
+    row.addEventListener('pointerup', function(e){
+      e.preventDefault();
+      G[stateKey] = !G[stateKey];
+      dot.classList.toggle('on', G[stateKey]);
+      render();
+    });
+  }
+  initToggle('tog-showCircle', 'showCircle');
+  initToggle('tog-iconShadow', 'iconShadow');
+
+  // ── Color pickers ────────────────────────────────────────────
+  function initColor(colorId, stateKey) {
+    var inp = document.getElementById(colorId);
+    var wrap = document.getElementById('wrap-'+colorId);
+    var swch = wrap ? wrap.querySelector('.swch') : null;
+    var hex  = document.getElementById('hex-'+colorId);
+    inp.addEventListener('input', function(){
+      G[stateKey] = inp.value;
+      if (swch) swch.style.background = inp.value;
+      if (hex)  hex.textContent = inp.value.toUpperCase();
+      render();
+    });
+    if (wrap) {
+      wrap.addEventListener('pointerup', function(e){
+        if (e.target === inp) return;
+        e.preventDefault();
+        inp.click();
+      });
+    }
+  }
+  initColor('circleColor', 'circleColor');
+  initColor('strokeColor', 'strokeColor');
+  initColor('gradStart',   'gradStart');
+  initColor('gradEnd',     'gradEnd');
+  initColor('iconColor',   'iconColor');
+  initColor('textColor',   'txtColor');
+
+  // ── Ranges ───────────────────────────────────────────────────
+  function initRange(rangeId, labelId, stateKey, parse, fmt) {
+    var inp = document.getElementById(rangeId);
+    var lbl = document.getElementById(labelId);
+    function upd() {
+      var v = parse(inp.value);
+      G[stateKey] = v;
+      lbl.textContent = fmt ? fmt(v) : v;
+      render();
+    }
+    inp.addEventListener('input',  upd);
+    inp.addEventListener('change', upd); // iOS fires change on thumb release
+  }
+  var toInt   = function(v){ return v|0; };
+  var toFloat = function(v){ return parseFloat(v); };
+  var f1  = function(v){ return v.toFixed(1); };
+  var f2  = function(v){ return v.toFixed(2); };
+
+  initRange('r-corner', 'v-corner', 'corner',    toInt,   null);
+  initRange('r-stroke', 'v-stroke', 'strokeW',   toFloat, f1);
+  initRange('r-pts',    'v-pts',    'pts',        toInt,   null);
+  initRange('r-ratio',  'v-ratio',  'ratio',      toFloat, f2);
+  initRange('r-rot',    'v-rot',    'rot',        toInt,   null);
+  initRange('r-isize',  'v-isize',  'iconSize',   toFloat, f2);
+  initRange('r-iy',     'v-iy',     'iconY',      toFloat, f1);
+  initRange('r-fs',     'v-fs',     'fontSize',   toFloat, null);
+
+  // ── Text input ───────────────────────────────────────────────
+  document.getElementById('innerText').addEventListener('input', function(e){
+    G.txt = e.target.value;
+    render();
+  });
+
+  // ── Buttons ──────────────────────────────────────────────────
+  document.getElementById('btn-copy').addEventListener('pointerup', function(e){
+    e.preventDefault(); copySVG();
+  });
+  document.getElementById('btn-dl').addEventListener('pointerup', function(e){
+    e.preventDefault(); dlSVG();
+  });
+
+  // ── Initial render ───────────────────────────────────────────
+  render();
+
+}); // end DOMContentLoaded
+</script>
+
+
+</body></html>
