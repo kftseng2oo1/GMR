@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW"><head><!-- PWA Meta — auto-injected by PWA 打包神器 -->
+<html lang="zh-TW">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>早安卡片 · 產生器</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700;900&amp;family=Ma+Shan+Zheng&amp;family=ZCOOL+XiaoWei&amp;family=Noto+Sans+TC:wght@300;400;700&amp;display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -13,7 +12,7 @@
   --muted:rgba(232,224,208,0.45);--r:14px;
   --fs:1;/* font-scale for elder mode */
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;overflow-x:hidden}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'PingFang TC','Heiti TC',sans-serif;overflow-x:hidden}
 
 /* ── ELDER MODE body class ── */
 body.elder{ --fs:1.25; }
@@ -38,7 +37,7 @@ header{
   background:var(--panel);position:sticky;top:0;z-index:100;
 }
 .header-logo{ display:flex;flex-direction:column; }
-header .logo{font-family:'Ma Shan Zheng',serif;font-size:1.3rem;color:var(--gold);letter-spacing:.2em}
+header .logo{font-family:'Hiragino Mincho ProN','Noto Serif TC',serif;font-size:1.3rem;color:var(--gold);letter-spacing:.2em}
 header .sub{font-size:.6rem;color:var(--muted);letter-spacing:.12em;padding-top:2px}
 /* Elder toggle in header */
 .elder-toggle-wrap{ display:flex;flex-direction:column;align-items:center;gap:3px; }
@@ -156,7 +155,7 @@ main{max-width:480px;margin:0 auto;padding:0 0 130px}
   width:100%;padding:11px;border-radius:9px;
   background:linear-gradient(135deg,rgba(212,168,67,.25),rgba(240,204,112,.15));
   border:1px solid rgba(212,168,67,.5);color:var(--gold);
-  font-family:'Noto Serif TC',serif;font-size:.8rem;letter-spacing:.15em;
+  font-family:'Hiragino Mincho ProN','PingFang TC',serif;font-size:.8rem;letter-spacing:.15em;
   cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
 }
 .ai-btn:active{opacity:.75;transform:scale(.97)}
@@ -181,7 +180,7 @@ main{max-width:480px;margin:0 auto;padding:0 0 130px}
 .input-row label{font-size:.65rem;color:var(--muted);letter-spacing:.1em}
 input[type=text],textarea,select{
   background:rgba(255,255,255,.04);border:1px solid var(--border);
-  border-radius:8px;color:var(--text);font-family:'Noto Serif TC',serif;
+  border-radius:8px;color:var(--text);font-family:'Hiragino Mincho ProN','PingFang TC',serif;
   font-size:.9rem;padding:10px 12px;outline:none;width:100%;transition:border-color .2s;
 }
 input[type=text]:focus,textarea:focus,select:focus{border-color:var(--gold)}
@@ -265,7 +264,7 @@ input[type=range]::-webkit-slider-thumb{
   width:100%;padding:16px;
   background:linear-gradient(135deg,#c9a84c,#f0d080,#c9a84c);
   border:none;border-radius:12px;color:#1a1100;
-  font-family:'Noto Serif TC',serif;font-size:1rem;font-weight:700;
+  font-family:'Hiragino Mincho ProN','PingFang TC',serif;font-size:1rem;font-weight:700;
   letter-spacing:.2em;cursor:pointer;box-shadow:0 4px 24px rgba(212,168,67,.35);
   transition:opacity .2s,transform .15s;
 }
@@ -280,17 +279,106 @@ input[type=range]::-webkit-slider-thumb{
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(212,168,67,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
 
+/* ── ERASER MODAL ── */
+#eraser-modal{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.85);
+  flex-direction:column;align-items:center;
+  overflow-y:auto;padding:16px 14px 100px;
+}
+#eraser-modal.open{display:flex;}
+.em-card{
+  width:100%;max-width:480px;background:#13131c;
+  border:1px solid rgba(0,212,255,.2);border-radius:16px;
+  overflow:hidden;margin-bottom:12px;
+}
+.em-head{
+  padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.em-head-title{font-size:.7rem;letter-spacing:.18em;color:#00d4ff;opacity:.85;}
+.em-close{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(255,255,255,.06);border:none;
+  color:rgba(255,255,255,.5);cursor:pointer;font-size:.8rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.em-body{padding:12px;}
+/* preview inside modal */
+.em-preview{position:relative;border-radius:8px;overflow:hidden;background:#000;margin-bottom:10px;}
+#em-canvas{display:block;width:100%;max-height:45vh;object-fit:contain;}
+.em-overlay{position:absolute;inset:0;pointer-events:none;}
+.em-box{
+  position:absolute;border:2px solid #00d4ff;
+  background:rgba(0,212,255,.15);border-radius:3px;
+}
+/* status */
+.em-status{
+  display:flex;align-items:center;gap:8px;padding:8px 0;
+  font-size:.72rem;color:rgba(221,232,240,.6);
+}
+.em-dot{width:7px;height:7px;border-radius:50%;background:#444;flex-shrink:0;transition:background .3s;}
+.em-dot.active{background:#00d4ff;box-shadow:0 0 6px #00d4ff;}
+.em-dot.done{background:#2ecc71;}
+.em-dot.err{background:#e74c3c;}
+/* log */
+.em-log{
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);
+  border-radius:7px;padding:8px 10px;font-size:.65rem;
+  font-family:monospace;color:rgba(200,220,240,.5);
+  line-height:1.7;max-height:90px;overflow-y:auto;margin-top:6px;
+}
+.em-log .lok{color:#2ecc71;}.em-log .linf{color:#00d4ff;}.em-log .lwrn{color:#e67e22;}
+/* region list */
+.em-regions{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.em-region-item{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);
+  border-radius:7px;font-size:.72rem;
+}
+.em-region-item .eri-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dde8f0;}
+.em-region-item .eri-del{
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(231,76,60,.2);border:1px solid rgba(231,76,60,.35);
+  color:#e74c3c;font-size:.55rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+/* algo */
+.em-algo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 6px;}
+.em-algo-btn{
+  padding:7px 4px;border-radius:7px;border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);color:rgba(221,232,240,.45);
+  cursor:pointer;text-align:center;font-size:.6rem;line-height:1.4;transition:all .15s;
+}
+.em-algo-btn.active{background:rgba(0,212,255,.12);border-color:#00d4ff;color:#00d4ff;}
+.em-algo-icon{font-size:.95rem;display:block;margin-bottom:2px;}
+/* modal bottom btns */
+.em-btns{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(transparent,#0a0a10 30%);padding:14px 14px 24px;z-index:510;}
+.em-btns .em-bmax{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:7px;}
+.em-btn{
+  width:100%;padding:13px;border:none;border-radius:10px;
+  font-family:'PingFang TC','Heiti TC',sans-serif;
+  font-size:.88rem;font-weight:600;letter-spacing:.1em;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.em-btn:active{transform:scale(.97);opacity:.9;}
+#em-analyze-btn{background:linear-gradient(135deg,#0055cc,#00d4ff);color:#fff;}
+#em-analyze-btn:disabled{opacity:.4;pointer-events:none;}
+#em-erase-btn{background:linear-gradient(135deg,#6c3483,#a855f7);color:#fff;display:none;}
+#em-apply-btn{background:linear-gradient(135deg,#1a6b2a,#2ecc71);color:#fff;display:none;}
+/* trigger btn in gallery */
+.erase-trigger{
+  width:100%;margin-top:8px;padding:8px 0;
+  background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);
+  border-radius:8px;color:#00d4ff;font-family:inherit;
+  font-size:.68rem;letter-spacing:.12em;cursor:pointer;
+  display:none;transition:all .15s;
+}
+.erase-trigger:active{background:rgba(0,212,255,.2);}
 /* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 </style>
-<meta name="application-name" content="GOOD MORNING"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="GOOD MORNING"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(r => console.log('[SW] registered:', r.scope))
-        .catch(e => console.warn('[SW] registration failed:', e));
-    });
-  }</script></head>
+</head>
 <body>
 
 <header>
@@ -330,28 +418,30 @@ input[type=range]::-webkit-slider-thumb{
       <div class="tpl-scroll" id="tpl-scroll"></div>
     </div>
     <div class="panel-section">
-      <div class="sec-title">📷 上傳自己的背景圖片</div>
-      <!-- Upload drop zone -->
+      <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span>📷 我的圖庫</span>
+        <span id="upload-count" style="font-size:.6rem;color:var(--muted)">0 張</span>
+      </div>
+      <!-- 圖庫橫向滾動列 -->
+      <div class="tpl-scroll" id="user-gallery" style="min-height:107px;align-items:center">
+        <!-- 新增按鈕（常駐最左） -->
+        <div id="upload-add-btn" class="tpl-upload-card" style="flex:0 0 80px;height:107px">
+          <span class="upload-icon">➕</span>
+          <span style="font-size:.58rem;color:var(--gold);letter-spacing:.06em">新增圖片</span>
+        </div>
+        <input type="file" id="bg-upload" accept="image/*" multiple style="display:none">
+      </div>
+      <!-- 拖曳區 -->
       <div id="upload-zone" style="
-        border:2px dashed rgba(212,168,67,.35);border-radius:12px;
-        padding:28px 16px;text-align:center;cursor:pointer;
-        background:rgba(212,168,67,.04);transition:all .2s;
+        border:2px dashed rgba(212,168,67,.25);border-radius:10px;
+        padding:16px;text-align:center;margin-top:10px;
+        background:rgba(212,168,67,.03);transition:all .2s;
       ">
-        <div style="font-size:2.2rem;margin-bottom:8px">🖼️</div>
-        <div style="font-size:.82rem;color:var(--gold);letter-spacing:.1em;margin-bottom:4px">點擊或拖曳上傳圖片</div>
-        <div style="font-size:.65rem;color:var(--muted)">支援 JPG、PNG、HEIC · 建議比例 3:4</div>
-        <input type="file" id="bg-upload" accept="image/*">
+        <div style="font-size:.75rem;color:var(--muted);letter-spacing:.08em">🖼️ 拖曳圖片到這裡，或點上方 ➕ 選擇</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.2);margin-top:4px">支援 JPG、PNG、HEIC · 可多選 · 長按縮圖可刪除</div>
       </div>
-      <!-- uploaded preview -->
-      <div id="uploaded-preview" style="display:none;margin-top:12px;position:relative">
-        <canvas id="up-thumb" width="90" height="120" style="border-radius:8px;border:2px solid var(--gold);display:block"></canvas>
-        <button id="clear-upload" style="
-          position:absolute;top:-6px;right:calc(100% - 96px);
-          width:22px;height:22px;border-radius:50%;background:#c0392b;
-          border:none;color:#fff;font-size:.7rem;cursor:pointer;line-height:22px;text-align:center;
-        ">✕</button>
-        <div style="font-size:.65rem;color:var(--gold);margin-top:6px;letter-spacing:.08em">✓ 已套用自訂背景</div>
-      </div>
+      <!-- 清除文字觸發 -->
+      <button class="erase-trigger" id="erase-trigger-btn">✨ AI 清除此圖文字</button>
     </div>
   </div>
 
@@ -451,11 +541,11 @@ input[type=range]::-webkit-slider-thumb{
       <div class="sec-title">💡 其他設定</div>
       <div class="toggle-row">
         <span>文字陰影（複雜背景建議開啟）</span>
-        <label class="toggle"><input type="checkbox" id="tog-shadow" checked=""><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-shadow" checked><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>顯示今日日期</span>
-        <label class="toggle"><input type="checkbox" id="tog-date" checked=""><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-date" checked><span class="knob"></span></label>
       </div>
     </div>
   </div>
@@ -468,10 +558,59 @@ input[type=range]::-webkit-slider-thumb{
   </div>
 </div>
 
+<!-- ═══ ERASER MODAL ═══ -->
+<div id="eraser-modal">
+  <div class="em-card">
+    <div class="em-head">
+      <span class="em-head-title">✨ AI 文字清除</span>
+      <button class="em-close" id="em-close">✕</button>
+    </div>
+    <div class="em-body">
+      <div class="em-preview">
+        <canvas id="em-canvas"></canvas>
+        <div class="em-overlay" id="em-overlay"></div>
+      </div>
+      <div class="em-status"><div class="em-dot" id="em-dot"></div><span id="em-status-txt">準備分析…</span></div>
+      <div class="em-log" id="em-log" style="display:none"></div>
+    </div>
+  </div>
+  <div class="em-card" id="em-regions-card" style="display:none">
+    <div class="em-head">
+      <span class="em-head-title">偵測到的文字區域</span>
+      <span id="em-region-count" style="font-size:.68rem;color:var(--text)"></span>
+    </div>
+    <div class="em-body">
+      <div class="em-regions" id="em-region-list"></div>
+      <div class="em-algo-row" id="em-algo-row">
+        <div class="em-algo-btn active" data-algo="inpaint"><span class="em-algo-icon">🎨</span>周圍取色</div>
+        <div class="em-algo-btn" data-algo="blur"><span class="em-algo-icon">🌫️</span>高斯模糊</div>
+        <div class="em-algo-btn" data-algo="mean"><span class="em-algo-icon">🖌️</span>均色填補</div>
+      </div>
+    </div>
+  </div>
+  <div class="em-card" id="em-compare-card" style="display:none">
+    <div class="em-head"><span class="em-head-title">清除結果對比</span></div>
+    <div class="em-body">
+      <div class="em-compare">
+        <div class="em-compare-col"><canvas id="em-before"></canvas><div class="em-compare-label">處理前</div></div>
+        <div class="em-compare-col"><canvas id="em-after"></canvas><div class="em-compare-label">處理後</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:20px"></div>
+</div>
+<div class="em-btns" id="em-btns" style="display:none">
+  <div class="em-bmax">
+    <button class="em-btn" id="em-analyze-btn" disabled>🔍 AI 分析圖片文字</button>
+    <button class="em-btn" id="em-erase-btn">✨ 開始清除文字</button>
+    <button class="em-btn" id="em-apply-btn">✅ 套用並使用此圖</button>
+  </div>
+</div>
+
 <script>
 window.onerror=function(msg,src,line,col,err){
   console.log('Card error:',msg,'line:',line);
-  return true; // suppress uncaught
+  return true;
 };
 // ═══════════════════════════════════════════
 //  TEMPLATES (Canvas-drawn backgrounds)
@@ -590,10 +729,10 @@ const TEMPLATES = [
 ];
 
 const FONTS = [
-  { id:'mashan',  label:'書法體', sample:'早安', stack:"'Ma Shan Zheng',serif" },
-  { id:'xiaowei', label:'小楷體', sample:'早安', stack:"'ZCOOL XiaoWei',serif" },
-  { id:'serif',   label:'明 體',  sample:'早安', stack:"'Noto Serif TC',serif" },
-  { id:'sans',    label:'圓 體',  sample:'早安', stack:"'Noto Sans TC',sans-serif" },
+  { id:'mincho',  label:'明朝體', sample:'早安', stack:"'Hiragino Mincho ProN','Noto Serif TC',serif" },
+  { id:'pingfang',label:'圓 體',  sample:'早安', stack:"'PingFang TC','Heiti TC','Microsoft JhengHei',sans-serif" },
+  { id:'serif',   label:'宋 體',  sample:'早安', stack:"Georgia,'Times New Roman',serif" },
+  { id:'sans',    label:'黑 體',  sample:'早安', stack:"'Heiti TC','PingFang TC',Arial,sans-serif" },
 ];
 
 const TEXT_COLORS = [
@@ -704,44 +843,382 @@ TEMPLATES.forEach((t,i)=>{
   tplScroll.appendChild(card);
 });
 
-// ── Upload zone ──
-const bgUpload = document.getElementById('bg-upload');
-const uploadZone = document.getElementById('upload-zone');
-const uploadedPreview = document.getElementById('uploaded-preview');
-const upThumb = document.getElementById('up-thumb');
+// ── 多圖圖庫 ──
+const bgUpload    = document.getElementById('bg-upload');
+const uploadAddBtn= document.getElementById('upload-add-btn');
+const userGallery = document.getElementById('user-gallery');
+const uploadZone  = document.getElementById('upload-zone');
+const uploadCount = document.getElementById('upload-count');
 
-function loadUploadedBg(file){
-  if(!file||!file.type.startsWith('image/'))return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      state.customBgImg=img;
-      // thumbnail
-      const tc2=upThumb.getContext('2d');
-      tc2.clearRect(0,0,90,120);
-      const sc=Math.max(90/img.width,120/img.height);
-      const w=img.width*sc,h=img.height*sc;
-      tc2.drawImage(img,(90-w)/2,(120-h)/2,w,h);
-      uploadedPreview.style.display='block';
-      // deselect template cards
-      document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
-      draw();
-    };
-    img.src=e.target.result;
-  };
-  reader.readAsDataURL(file);
+// 圖庫陣列：{img, dataUrl, thumbCanvas}
+const userImages = [];
+let activeUserIdx = -1;  // 目前選中的圖庫項目 index
+
+function updateCountLabel(){
+  uploadCount.textContent = userImages.length + ' 張';
 }
-bgUpload.addEventListener('change',e=>loadUploadedBg(e.target.files[0]));
-uploadZone.addEventListener('click',()=>bgUpload.click());
-uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.style.borderColor='var(--gold)';});
-uploadZone.addEventListener('dragleave',()=>{uploadZone.style.borderColor='rgba(212,168,67,.35)';});
-uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.style.borderColor='rgba(212,168,67,.35)';loadUploadedBg(e.dataTransfer.files[0]);});
-document.getElementById('clear-upload').addEventListener('click',()=>{
-  state.customBgImg=null;uploadedPreview.style.display='none';
-  document.querySelectorAll('.tpl-card').forEach((c,i)=>{if(i===0)c.classList.add('active');});
-  state.tpl=TEMPLATES[0];draw();
+
+function selectUserImage(idx){
+  activeUserIdx = idx;
+  state.customBgImg = userImages[idx].img;
+  document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.user-img-card').forEach((c,i)=>{
+    c.classList.toggle('active', i===idx);
+  });
+  showEraseTrigger(true);
+  draw();
+}
+
+function deleteUserImage(idx){
+  userImages.splice(idx,1);
+  // re-render gallery
+  renderGallery();
+  if(userImages.length===0){
+    // fall back to first template
+    state.customBgImg=null;
+    activeUserIdx=-1;
+    document.querySelectorAll('.tpl-card').forEach((c,i)=>{if(i===0)c.classList.add('active');});
+    state.tpl=TEMPLATES[0];
+  } else {
+    const newIdx=Math.min(idx, userImages.length-1);
+    selectUserImage(newIdx);
+  }
+  draw();
+  updateCountLabel();
+}
+
+function renderGallery(){
+  // remove old cards (keep add-btn)
+  document.querySelectorAll('.user-img-card').forEach(c=>c.remove());
+  userImages.forEach((item,i)=>{
+    const card = document.createElement('div');
+    card.className='tpl-card user-img-card'+(i===activeUserIdx?' active':'');
+    card.style.flex='0 0 80px';card.style.height='107px';
+    // thumb canvas
+    const tc=document.createElement('canvas');
+    tc.width=80;tc.height=107;
+    const tcx=tc.getContext('2d');
+    const sc=Math.max(80/item.img.width,107/item.img.height);
+    const w=item.img.width*sc,h=item.img.height*sc;
+    tcx.drawImage(item.img,(80-w)/2,(107-h)/2,w,h);
+    card.appendChild(tc);
+    // label
+    const lbl=document.createElement('div');
+    lbl.className='tpl-label';
+    lbl.textContent='圖片 '+(i+1);
+    card.appendChild(lbl);
+    // delete btn
+    const del=document.createElement('button');
+    del.textContent='✕';
+    del.style.cssText='position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(192,57,43,.85);border:none;color:#fff;font-size:.6rem;cursor:pointer;line-height:20px;text-align:center;z-index:10;opacity:0;transition:opacity .2s;';
+    card.appendChild(del);
+    // show delete on hover/long-press
+    card.addEventListener('mouseenter',()=>{del.style.opacity='1';});
+    card.addEventListener('mouseleave',()=>{del.style.opacity='0';});
+    // long-press for mobile
+    let pressTimer;
+    card.addEventListener('touchstart',()=>{pressTimer=setTimeout(()=>{del.style.opacity='1';},500);},{passive:true});
+    card.addEventListener('touchend',()=>clearTimeout(pressTimer),{passive:true});
+    del.addEventListener('click',e=>{e.stopPropagation();deleteUserImage(i);});
+    card.addEventListener('click',()=>selectUserImage(i));
+    // insert before add-btn
+    userGallery.insertBefore(card, uploadAddBtn);
+  });
+}
+
+function loadFiles(files){
+  const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));
+  if(!arr.length)return;
+  let loaded=0;
+  arr.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        userImages.push({img, dataUrl:e.target.result});
+        loaded++;
+        if(loaded===arr.length){
+          renderGallery();
+          updateCountLabel();
+          selectUserImage(userImages.length-1);
+        }
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+uploadAddBtn.addEventListener('click',()=>bgUpload.click());
+bgUpload.addEventListener('change',e=>{loadFiles(e.target.files);bgUpload.value='';});
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.style.borderColor='var(--gold)';uploadZone.style.background='rgba(212,168,67,.08)';});
+uploadZone.addEventListener('dragleave',()=>{uploadZone.style.borderColor='rgba(212,168,67,.25)';uploadZone.style.background='rgba(212,168,67,.03)';});
+uploadZone.addEventListener('drop',e=>{
+  e.preventDefault();
+  uploadZone.style.borderColor='rgba(212,168,67,.25)';
+  uploadZone.style.background='rgba(212,168,67,.03)';
+  loadFiles(e.dataTransfer.files);
 });
+
+// ── ERASER MODULE ──
+const eraserModal   = document.getElementById('eraser-modal');
+const emBtns        = document.getElementById('em-btns');
+const emCanvas      = document.getElementById('em-canvas');
+const emCtx         = emCanvas.getContext('2d');
+const emOverlay     = document.getElementById('em-overlay');
+const emLog         = document.getElementById('em-log');
+const emDot         = document.getElementById('em-dot');
+const emStatusTxt   = document.getElementById('em-status-txt');
+const emAnalyzeBtn  = document.getElementById('em-analyze-btn');
+const emEraseBtn    = document.getElementById('em-erase-btn');
+const emApplyBtn    = document.getElementById('em-apply-btn');
+const eraseTrigger  = document.getElementById('erase-trigger-btn');
+
+let emRegions = [];
+let emAlgo    = 'inpaint';
+let emWorkImg = null;   // the image being processed
+let emWorkIdx = -1;     // index in userImages
+
+function emSetStatus(type, txt){
+  emDot.className='em-dot'+(type==='active'?' active':type==='done'?' done':type==='err'?' err':'');
+  emStatusTxt.textContent=txt;
+}
+function emAddLog(msg, cls){
+  emLog.style.display='block';
+  const s=document.createElement('span');
+  s.style.display='block';s.className=cls||'';s.textContent=msg;
+  emLog.appendChild(s);emLog.scrollTop=emLog.scrollHeight;
+}
+
+function openEraser(imgObj, idx){
+  emWorkImg=imgObj;emWorkIdx=idx;
+  emRegions=[];
+  // reset UI
+  emLog.innerHTML='';emLog.style.display='none';
+  emOverlay.innerHTML='';
+  document.getElementById('em-regions-card').style.display='none';
+  document.getElementById('em-compare-card').style.display='none';
+  emEraseBtn.style.display='none';
+  emApplyBtn.style.display='none';
+  emAnalyzeBtn.disabled=false;
+  emAnalyzeBtn.innerHTML='🔍 AI 分析圖片文字';
+  // draw image
+  emCanvas.width=imgObj.img.width;emCanvas.height=imgObj.img.height;
+  emCtx.drawImage(imgObj.img,0,0);
+  emSetStatus('','準備好，點下方按鈕開始分析');
+  // show modal
+  eraserModal.classList.add('open');
+  emBtns.style.display='block';
+  document.body.style.overflow='hidden';
+}
+
+function closeEraser(){
+  eraserModal.classList.remove('open');
+  emBtns.style.display='none';
+  document.body.style.overflow='';
+}
+
+document.getElementById('em-close').addEventListener('click', closeEraser);
+
+// Show trigger when a user image is selected
+function showEraseTrigger(show){
+  eraseTrigger.style.display=show?'block':'none';
+}
+
+eraseTrigger.addEventListener('click',()=>{
+  if(activeUserIdx<0||!userImages[activeUserIdx])return;
+  openEraser(userImages[activeUserIdx], activeUserIdx);
+});
+
+// Algo selector inside modal
+document.querySelectorAll('.em-algo-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.em-algo-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');emAlgo=btn.dataset.algo;
+  });
+});
+
+// ── AI Analyze ──
+emAnalyzeBtn.addEventListener('click', async()=>{
+  if(!emWorkImg)return;
+  emAnalyzeBtn.disabled=true;
+  emAnalyzeBtn.innerHTML='<span class="spinner"></span> AI 分析中…';
+  emSetStatus('active','正在分析圖片文字…');
+  emLog.innerHTML='';emLog.style.display='block';
+  emAddLog('📤 上傳圖片給 AI…','linf');
+
+  // convert to base64
+  const tmpC=document.createElement('canvas');
+  tmpC.width=emWorkImg.img.width;tmpC.height=emWorkImg.img.height;
+  tmpC.getContext('2d').drawImage(emWorkImg.img,0,0);
+  const b64=tmpC.toDataURL('image/jpeg',0.85).split(',')[1];
+
+  const prompt='請分析這張圖片中所有可見的文字區域（包含中文、英文、數字、浮水印）。'+
+    '對每個文字區域回傳相對座標（0到1）。'+
+    '只輸出純 JSON，格式：{"regions":[{"text":"內容","x":0.1,"y":0.05,"w":0.8,"h":0.1}]}'+
+    '若無文字則輸出{"regions":[]}。不要任何說明或 markdown。';
+
+  try{
+    emAddLog('🤖 AI 辨識中…','linf');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:800,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+          {type:'text',text:prompt}
+        ]}]
+      })
+    });
+    const data=await resp.json();
+    const raw=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
+    emAddLog('📥 收到回應','linf');
+    let parsed;
+    try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}
+    catch(pe){emAddLog('⚠️ 格式解析失敗','lwrn');emSetStatus('err','解析失敗，請重試');emAnalyzeBtn.disabled=false;emAnalyzeBtn.innerHTML='🔍 重新分析';return;}
+    emRegions=(parsed.regions||[]).filter(r=>r.w>0&&r.h>0);
+    emAddLog('✅ 找到 '+emRegions.length+' 個文字區域','lok');
+    renderEmRegions();
+    document.getElementById('em-regions-card').style.display='block';
+    if(emRegions.length>0){
+      emEraseBtn.style.display='flex';
+      emSetStatus('done','偵測完成，可移除不需要清除的區域');
+    } else {
+      emSetStatus('done','未偵測到文字');
+    }
+  }catch(e){
+    emAddLog('❌ 錯誤：'+e.message,'lwrn');
+    emSetStatus('err','網路錯誤，請稍後再試');
+  }
+  emAnalyzeBtn.disabled=false;
+  emAnalyzeBtn.innerHTML='🔍 重新分析';
+});
+
+function renderEmRegions(){
+  emOverlay.innerHTML='';
+  const rlist=document.getElementById('em-region-list');
+  rlist.innerHTML='';
+  document.getElementById('em-region-count').textContent=emRegions.length+' 處';
+  emRegions.forEach((r,i)=>{
+    // box on canvas
+    const box=document.createElement('div');
+    box.className='em-box';
+    box.style.left=(r.x*100)+'%';box.style.top=(r.y*100)+'%';
+    box.style.width=(r.w*100)+'%';box.style.height=(r.h*100)+'%';
+    emOverlay.appendChild(box);
+    // list
+    const item=document.createElement('div');
+    item.className='em-region-item';
+    item.innerHTML='<span style="color:#00d4ff;font-size:.62rem;flex-shrink:0">'+(i+1)+'</span>'+
+      '<span class="eri-text">'+(r.text||'未知文字')+'</span>'+
+      '<div class="eri-del" data-i="'+i+'">✕</div>';
+    rlist.appendChild(item);
+  });
+  rlist.querySelectorAll('.eri-del').forEach(d=>{
+    d.addEventListener('click',()=>{
+      emRegions.splice(+d.dataset.i,1);
+      renderEmRegions();
+      if(!emRegions.length) emEraseBtn.style.display='none';
+    });
+  });
+}
+
+// ── Erase ──
+emEraseBtn.addEventListener('click',()=>{
+  if(!emWorkImg||!emRegions.length)return;
+  emSetStatus('active','清除中…');
+  const img=emWorkImg.img;
+  const W=img.width,H=img.height;
+  const wc=document.createElement('canvas');wc.width=W;wc.height=H;
+  const wCtx=wc.getContext('2d');wCtx.drawImage(img,0,0);
+  const id=wCtx.getImageData(0,0,W,H);
+  emRegions.forEach(r=>{
+    const rx=Math.max(0,Math.floor(r.x*W)),ry=Math.max(0,Math.floor(r.y*H));
+    const rw=Math.min(W-rx,Math.ceil(r.w*W)),rh=Math.min(H-ry,Math.ceil(r.h*H));
+    if(emAlgo==='blur') emGaussBlur(id,W,H,rx,ry,rw,rh,18);
+    else if(emAlgo==='mean') emMeanFill(id,W,H,rx,ry,rw,rh);
+    else emInpaint(id,W,H,rx,ry,rw,rh,3);
+  });
+  wCtx.putImageData(id,0,0);
+  // show result
+  const bc=document.getElementById('em-before'),ac=document.getElementById('em-after');
+  bc.width=W;bc.height=H;bc.getContext('2d').drawImage(img,0,0);
+  ac.width=W;ac.height=H;ac.getContext('2d').drawImage(wc,0,0);
+  document.getElementById('em-compare-card').style.display='block';
+  emApplyBtn.style.display='flex';
+  emSetStatus('done','清除完成！確認後點「套用」');
+  emAddLog('✅ 文字清除完成','lok');
+  // store result
+  emWorkImg._cleaned=wc;
+  document.getElementById('em-compare-card').scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+
+// ── Apply cleaned image back to gallery ──
+emApplyBtn.addEventListener('click',()=>{
+  if(!emWorkImg||!emWorkImg._cleaned)return;
+  const wc=emWorkImg._cleaned;
+  const newImg=new Image();
+  newImg.onload=()=>{
+    userImages[emWorkIdx].img=newImg;
+    userImages[emWorkIdx].dataUrl=wc.toDataURL('image/jpeg',0.92);
+    renderGallery();
+    selectUserImage(emWorkIdx);
+    closeEraser();
+    emAddLog('✅ 已套用到圖庫','lok');
+  };
+  newImg.src=wc.toDataURL('image/jpeg',0.92);
+});
+
+// ── Inpaint algorithms ──
+function emInpaint(id,W,H,rx,ry,rw,rh,passes){
+  const d=id.data;
+  const PAD=Math.max(5,Math.round(Math.min(rw,rh)*0.18));
+  for(let p=0;p<passes*2;p++){
+    for(let y=ry;y<ry+rh;y++){for(let x=rx;x<rx+rw;x++){
+      let r=0,g=0,b=0,wt=0;const sr=PAD+3;
+      for(let dy=-sr;dy<=sr;dy++){for(let dx=-sr;dx<=sr;dx++){
+        const nx=x+dx,ny=y+dy;
+        if(nx<0||nx>=W||ny<0||ny>=H)continue;
+        if(nx>=rx&&nx<rx+rw&&ny>=ry&&ny<ry+rh){
+          if(!(nx<rx+PAD||nx>=rx+rw-PAD||ny<ry+PAD||ny>=ry+rh-PAD))continue;
+        }
+        const w2=1/(Math.abs(dx)+Math.abs(dy)+1);
+        const i2=(ny*W+nx)*4;r+=d[i2]*w2;g+=d[i2+1]*w2;b+=d[i2+2]*w2;wt+=w2;
+      }}
+      if(wt>0){const i2=(y*W+x)*4;d[i2]=r/wt;d[i2+1]=g/wt;d[i2+2]=b/wt;}
+    }}
+  }
+}
+function emGaussBlur(id,W,H,rx,ry,rw,rh,rad){
+  const d=id.data,tmp=new Uint8ClampedArray(d),r=Math.round(rad);
+  for(let y=ry;y<ry+rh;y++){for(let x=rx;x<rx+rw;x++){
+    let rv=0,gv=0,bv=0,wt=0;
+    for(let dy=-r;dy<=r;dy++){for(let dx=-r;dx<=r;dx++){
+      const nx=Math.min(W-1,Math.max(0,x+dx)),ny=Math.min(H-1,Math.max(0,y+dy));
+      const g2=Math.exp(-(dx*dx+dy*dy)/(2*r*r));
+      const i2=(ny*W+nx)*4;rv+=tmp[i2]*g2;gv+=tmp[i2+1]*g2;bv+=tmp[i2+2]*g2;wt+=g2;
+    }}
+    const i2=(y*W+x)*4;d[i2]=rv/wt;d[i2+1]=gv/wt;d[i2+2]=bv/wt;
+  }}
+}
+function emMeanFill(id,W,H,rx,ry,rw,rh){
+  const d=id.data,PAD=Math.max(8,Math.round(Math.min(rw,rh)*0.22));
+  let r=0,g=0,b=0,cnt=0;
+  for(let y=Math.max(0,ry-PAD);y<Math.min(H,ry+rh+PAD);y++){
+    for(let x=Math.max(0,rx-PAD);x<Math.min(W,rx+rw+PAD);x++){
+      if(x>=rx&&x<rx+rw&&y>=ry&&y<ry+rh)continue;
+      const i2=(y*W+x)*4;r+=d[i2];g+=d[i2+1];b+=d[i2+2];cnt++;
+    }
+  }
+  if(!cnt)return;
+  const fr=r/cnt,fg=g/cnt,fb=b/cnt;
+  for(let y=ry;y<ry+rh;y++){for(let x=rx;x<rx+rw;x++){
+    const i2=(y*W+x)*4;d[i2]=fr;d[i2+1]=fg;d[i2+2]=fb;
+  }}
+}
+
 
 // ── Phrase library ──
 const phraseCatsEl=document.getElementById('phrase-cats');
@@ -1139,13 +1616,7 @@ document.getElementById('save-btn').addEventListener('click',()=>{
   a.download='早安卡片.jpg';a.click();
 });
 
-// Wait for fonts before first draw
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(function(){ draw(); }).catch(function(){ draw(); });
-} else {
-  setTimeout(draw, 300);
-}
+draw();
 </script>
-
-
-</body></html>
+</body>
+</html>
