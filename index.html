@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
+<html lang="zh-TW"><head><!-- PWA Meta — auto-injected by PWA 打包神器 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>早安卡片 · 產生器</title>
@@ -378,7 +377,14 @@ input[type=range]::-webkit-slider-thumb{
 /* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 </style>
-</head>
+<meta name="application-name" content="GOOD MORNING"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="GOOD MORNING"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(r => console.log('[SW] registered:', r.scope))
+        .catch(e => console.warn('[SW] registration failed:', e));
+    });
+  }</script></head>
 <body>
 
 <header>
@@ -429,7 +435,7 @@ input[type=range]::-webkit-slider-thumb{
           <span class="upload-icon">➕</span>
           <span style="font-size:.58rem;color:var(--gold);letter-spacing:.06em">新增圖片</span>
         </div>
-        <input type="file" id="bg-upload" accept="image/*" multiple style="display:none">
+        <input type="file" id="bg-upload" accept="image/*" multiple="" style="display:none">
       </div>
       <!-- 拖曳區 -->
       <div id="upload-zone" style="
@@ -541,11 +547,11 @@ input[type=range]::-webkit-slider-thumb{
       <div class="sec-title">💡 其他設定</div>
       <div class="toggle-row">
         <span>文字陰影（複雜背景建議開啟）</span>
-        <label class="toggle"><input type="checkbox" id="tog-shadow" checked><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-shadow" checked=""><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>顯示今日日期</span>
-        <label class="toggle"><input type="checkbox" id="tog-date" checked><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-date" checked=""><span class="knob"></span></label>
       </div>
     </div>
   </div>
@@ -601,7 +607,7 @@ input[type=range]::-webkit-slider-thumb{
 </div>
 <div class="em-btns" id="em-btns" style="display:none">
   <div class="em-bmax">
-    <button class="em-btn" id="em-analyze-btn" disabled>🔍 AI 分析圖片文字</button>
+    <button class="em-btn" id="em-analyze-btn" disabled="">🔍 AI 分析圖片文字</button>
     <button class="em-btn" id="em-erase-btn">✨ 開始清除文字</button>
     <button class="em-btn" id="em-apply-btn">✅ 套用並使用此圖</button>
   </div>
@@ -1618,5 +1624,6 @@ document.getElementById('save-btn').addEventListener('click',()=>{
 
 draw();
 </script>
-</body>
-</html>
+
+
+</body></html>
