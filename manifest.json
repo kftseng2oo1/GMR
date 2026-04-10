@@ -1,6 +1,6 @@
 {
-  "name": "早安您好",
-  "short_name": "早安您好",
+  "name": "GOOD MORNING",
+  "short_name": "GOOD MORNING",
   "description": "",
   "start_url": "/GMR/",
   "scope": "/GMR/",
@@ -14,8 +14,8 @@
   ],
   "shortcuts": [
     {
-      "name": "開啟 早安您好",
-      "short_name": "早安您好",
+      "name": "開啟 GOOD MORNING",
+      "short_name": "GOOD MORNING",
       "url": "/GMR/",
       "icons": [
         {

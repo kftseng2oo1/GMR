@@ -1,212 +1,289 @@
 <!DOCTYPE html>
 <html lang="zh-TW"><head><!-- PWA Meta — auto-injected by PWA 打包神器 -->
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-
-
-
-
-<title>Icon Generator Pro</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Syne:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>早安卡片 · 產生器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700;900&amp;family=Ma+Shan+Zheng&amp;family=ZCOOL+XiaoWei&amp;family=Noto+Sans+TC:wght@300;400;700&amp;display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#0d0f14; --sur:#13161d; --sur2:#1a1e27; --sur3:#212633;
-  --bd:rgba(255,255,255,0.07); --bdhv:rgba(255,255,255,0.14);
-  --acc:#7c6dfa; --txt:#e8eaf0; --txt2:#8892a4; --txt3:#4d5566;
-  --r:8px;
-  --sft: env(safe-area-inset-top,0px);
-  --sfb: env(safe-area-inset-bottom,0px);
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e0e14;--panel:#16161f;--border:rgba(255,255,255,0.07);
+  --gold:#d4a843;--gold2:#f0cc70;--text:#e8e0d0;
+  --muted:rgba(232,224,208,0.45);--r:14px;
+  --fs:1;/* font-scale for elder mode */
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overscroll-behavior:none}
-body{
-  font-family:'Syne',sans-serif;background:var(--bg);color:var(--txt);
-  display:flex;flex-direction:column;min-height:100vh;
-  padding-top:var(--sft);
-}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;overflow-x:hidden}
 
-/* topbar */
-.topbar{
+/* ── ELDER MODE body class ── */
+body.elder{ --fs:1.25; }
+body.elder .step-tab{ font-size:calc(.7rem * var(--fs)); padding:14px 4px 12px; }
+body.elder .step-tab .num{ width:28px;height:28px;line-height:28px;font-size:.9rem; }
+body.elder .sec-title{ font-size:calc(.65rem * var(--fs)); }
+body.elder .pcat-btn{ font-size:calc(.7rem * var(--fs)); padding:7px 14px; }
+body.elder .phrase-item{ font-size:calc(.8rem * var(--fs)); padding:13px 14px; }
+body.elder input[type=text],body.elder textarea,body.elder select{ font-size:calc(.9rem * var(--fs)); padding:13px 14px; }
+body.elder .font-btn{ font-size:1.3rem; }
+body.elder .font-btn .fname{ font-size:calc(.6rem * var(--fs)); }
+body.elder .color-swatch{ width:36px;height:36px; }
+body.elder .toggle-row span{ font-size:calc(.8rem * var(--fs)); }
+body.elder #save-btn{ font-size:calc(1rem * var(--fs)); padding:18px; }
+body.elder .ai-btn{ font-size:calc(.75rem * var(--fs)); padding:10px 14px; }
+body.elder .upload-label{ font-size:calc(.8rem * var(--fs)); }
+
+/* ── HEADER ── */
+header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:12px 18px;background:var(--sur);border-bottom:1px solid var(--bd);
-  flex-shrink:0;
+  padding:14px 16px 10px;border-bottom:1px solid var(--border);
+  background:var(--panel);position:sticky;top:0;z-index:100;
 }
-.topbar-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:9px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
-.topbar-badge{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3);letter-spacing:.08em;text-transform:uppercase}
-
-/* layout */
-.main{display:flex;flex:1;min-height:0;overflow:hidden}
-
-/* controls */
-.ctrl{
-  width:300px;min-width:260px;
-  background:var(--sur);border-right:1px solid var(--bd);
-  overflow-y:auto;overflow-x:hidden;
-  padding:16px;display:flex;flex-direction:column;gap:0;
-  -webkit-overflow-scrolling:touch;
+.header-logo{ display:flex;flex-direction:column; }
+header .logo{font-family:'Ma Shan Zheng',serif;font-size:1.3rem;color:var(--gold);letter-spacing:.2em}
+header .sub{font-size:.6rem;color:var(--muted);letter-spacing:.12em;padding-top:2px}
+/* Elder toggle in header */
+.elder-toggle-wrap{ display:flex;flex-direction:column;align-items:center;gap:3px; }
+.elder-toggle-wrap .elabel{ font-size:.55rem;color:var(--muted);letter-spacing:.08em; }
+.elder-sw{ position:relative;width:48px;height:26px;cursor:pointer; }
+.elder-sw input{ opacity:0;width:0;height:0; }
+.elder-sw .knob{
+  position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:26px;transition:.3s;
 }
-.ctrl::-webkit-scrollbar{width:3px}
-.ctrl::-webkit-scrollbar-thumb{background:var(--sur3);border-radius:2px}
-
-/* section label */
-.sec{
-  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--txt3);
-  margin:14px 0 8px;display:flex;align-items:center;gap:8px;
+.elder-sw .knob:before{
+  content:'';position:absolute;width:20px;height:20px;border-radius:50%;
+  background:#666;top:3px;left:3px;transition:.3s;font-size:.6rem;display:flex;align-items:center;justify-content:center;
 }
-.sec::after{content:'';flex:1;height:1px;background:var(--bd)}
+.elder-sw input:checked+.knob{ background:rgba(212,168,67,.35); }
+.elder-sw input:checked+.knob:before{ transform:translateX(22px);background:var(--gold); }
 
-/* field */
-.fld{margin-bottom:10px}
-.flb{
-  font-size:11px;font-weight:600;color:var(--txt2);
-  margin-bottom:5px;display:flex;justify-content:space-between;
+/* ── STEP TABS ── */
+.steps{display:flex;background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:63px;z-index:99;}
+.step-tab{
+  flex:1;padding:11px 4px 9px;text-align:center;font-size:.7rem;
+  letter-spacing:.08em;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .2s;
 }
-.flb em{font-style:normal;font-family:'DM Mono',monospace;color:var(--acc);font-size:10px}
+.step-tab .num{
+  display:block;width:22px;height:22px;border-radius:50%;
+  background:rgba(255,255,255,0.06);line-height:22px;
+  margin:0 auto 3px;font-size:.75rem;font-weight:700;transition:all .2s;
+}
+.step-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.step-tab.active .num{background:var(--gold);color:#1a1100}
 
-/* range */
+/* ── MAIN ── */
+main{max-width:480px;margin:0 auto;padding:0 0 130px}
+
+/* ── PREVIEW ── */
+.preview-wrap{
+  background:var(--panel);padding:14px;border-bottom:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  position:sticky;top:109px;z-index:90;
+}
+.canvas-outer{width:100%;max-width:280px;border-radius:10px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.7);}
+#card-canvas{display:block;width:100%;aspect-ratio:3/4}
+
+/* ── SECTIONS ── */
+.panel-section{padding:16px;border-bottom:1px solid var(--border)}
+.panel-section:last-child{border-bottom:none}
+.sec-title{font-size:.65rem;letter-spacing:.25em;color:var(--gold);opacity:.8;margin-bottom:11px;text-transform:uppercase}
+
+/* ── TEMPLATE GRID ── */
+.tpl-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.tpl-scroll::-webkit-scrollbar{display:none}
+.tpl-card{
+  flex:0 0 80px;height:107px;border-radius:9px;overflow:hidden;
+  border:2px solid transparent;cursor:pointer;position:relative;transition:transform .15s;flex-shrink:0;
+}
+.tpl-card:active{transform:scale(.93)}
+.tpl-card.active{border-color:var(--gold)}
+.tpl-card canvas{width:100%;height:100%;display:block}
+.tpl-card .tpl-label{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(0,0,0,.75));
+  font-size:.55rem;text-align:center;padding:12px 3px 4px;color:#fff;letter-spacing:.06em;
+}
+/* upload card */
+.tpl-upload-card{
+  flex:0 0 80px;height:107px;border-radius:9px;
+  border:2px dashed rgba(212,168,67,.4);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;color:var(--gold);font-size:.6rem;letter-spacing:.1em;
+  flex-shrink:0;transition:all .2s;background:rgba(212,168,67,.04);
+}
+.tpl-upload-card:active{transform:scale(.93);border-color:var(--gold);}
+.tpl-upload-card .upload-icon{font-size:1.6rem;}
+#bg-upload{display:none}
+
+/* ── PHRASE LIBRARY ── */
+.phrase-cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;margin-bottom:10px}
+.phrase-cats::-webkit-scrollbar{display:none}
+.pcat-btn{
+  flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:.7rem;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  cursor:pointer;letter-spacing:.08em;transition:all .15s;white-space:nowrap;
+}
+.pcat-btn.active{background:rgba(212,168,67,.15);border-color:var(--gold);color:var(--gold)}
+.phrase-list{display:flex;flex-direction:column;gap:7px;max-height:220px;overflow-y:auto;padding-right:2px;}
+.phrase-item{
+  padding:12px 14px;
+  background:rgba(255,255,255,0.09);
+  border-radius:9px;
+  border:1px solid rgba(255,255,255,0.14);
+  font-size:.85rem;
+  color:#f0ead8;
+  cursor:pointer;
+  transition:all .15s;
+  line-height:1.6;
+  letter-spacing:.03em;
+}
+.phrase-item:hover{background:rgba(255,255,255,0.13);border-color:rgba(212,168,67,.4);color:#fff;}
+.phrase-item:active{background:rgba(212,168,67,.2);border-color:var(--gold);color:#fff;}
+.phrase-source{
+  display:block;font-size:.6rem;color:var(--gold);opacity:.75;
+  margin-top:4px;letter-spacing:.08em;
+}
+
+/* ── AI SECTION ── */
+.ai-box{
+  background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.2);
+  border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;
+}
+.ai-box-title{font-size:.7rem;color:var(--gold);letter-spacing:.15em;display:flex;align-items:center;gap:6px;}
+.ai-controls{ display:flex;flex-direction:column;gap:8px; }
+.ai-select-row{ display:flex;gap:8px; }
+.ai-select-row select{ flex:1;font-size:.8rem; }
+.ai-btn{
+  width:100%;padding:11px;border-radius:9px;
+  background:linear-gradient(135deg,rgba(212,168,67,.25),rgba(240,204,112,.15));
+  border:1px solid rgba(212,168,67,.5);color:var(--gold);
+  font-family:'Noto Serif TC',serif;font-size:.8rem;letter-spacing:.15em;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.ai-btn:active{opacity:.75;transform:scale(.97)}
+.ai-btn.loading{ opacity:.6;pointer-events:none; }
+.ai-result{
+  background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;
+  font-size:.82rem;line-height:1.65;color:var(--text);min-height:52px;
+  border:1px solid var(--border);white-space:pre-wrap;
+}
+.ai-result.placeholder{ color:var(--muted);font-style:italic;font-size:.75rem; }
+.ai-use-btn{
+  padding:8px 14px;border-radius:7px;background:rgba(212,168,67,.18);
+  border:1px solid rgba(212,168,67,.4);color:var(--gold);
+  font-size:.75rem;letter-spacing:.1em;cursor:pointer;transition:all .15s;
+  align-self:flex-end;
+}
+.ai-use-btn:active{opacity:.7}
+
+/* ── TEXT INPUTS ── */
+.input-group{display:flex;flex-direction:column;gap:10px}
+.input-row{display:flex;flex-direction:column;gap:4px}
+.input-row label{font-size:.65rem;color:var(--muted);letter-spacing:.1em}
+input[type=text],textarea,select{
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'Noto Serif TC',serif;
+  font-size:.9rem;padding:10px 12px;outline:none;width:100%;transition:border-color .2s;
+}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--gold)}
+textarea{resize:none;line-height:1.6}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M6 8L0 0h12z' fill='%23d4a843'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2);font-size:.8rem}
+
+/* ── TOGGLES ── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.toggle-row span{font-size:.8rem;color:var(--muted)}
+.toggle{position:relative;width:42px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .knob{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:24px;transition:.3s;}
+.toggle .knob:before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#888;top:3px;left:3px;transition:.3s;}
+.toggle input:checked+.knob{background:rgba(212,168,67,.3)}
+.toggle input:checked+.knob:before{transform:translateX(18px);background:var(--gold)}
+
+/* ── FONT SELECTOR ── */
+.font-options{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.font-btn{
+  padding:10px 8px;border-radius:8px;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;
+  text-align:center;font-size:1.1rem;transition:all .15s;
+}
+.font-btn .fname{font-size:.6rem;color:var(--muted);display:block;margin-top:3px;letter-spacing:.1em}
+.font-btn.active{background:rgba(212,168,67,.12);border-color:var(--gold)}
+.font-btn:active{transform:scale(.95)}
+
+/* ── FONT SIZE SLIDER ── */
+.slider-row{ display:flex;align-items:center;gap:10px; }
+.slider-row label{ font-size:.65rem;color:var(--muted);white-space:nowrap; }
 input[type=range]{
-  width:100%;height:4px;-webkit-appearance:none;
-  background:var(--sur3);border-radius:4px;outline:none;cursor:pointer;
-  padding:12px 0;margin:-12px 0;background-clip:content-box;display:block;
+  flex:1;-webkit-appearance:none;height:4px;border-radius:2px;
+  background:rgba(255,255,255,.1);outline:none;
 }
 input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
-  background:var(--acc);box-shadow:0 0 8px rgba(124,109,250,.5);cursor:pointer;
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:var(--gold);cursor:pointer;
 }
+.slider-val{ font-size:.75rem;color:var(--gold);min-width:28px;text-align:right; }
 
-/* color field */
-.colf{
-  display:flex;align-items:center;gap:8px;
-  background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r);
-  padding:8px 10px;cursor:pointer;min-height:44px;
-}
-.colf:active{border-color:var(--bdhv)}
-.swch{
-  width:20px;height:20px;border-radius:4px;flex-shrink:0;
-  border:1px solid rgba(255,255,255,.15);position:relative;overflow:hidden;
-}
-.swch input[type=color]{
-  position:absolute;inset:-4px;opacity:0;cursor:pointer;width:140%;height:140%;
-}
-.chex{font-family:'DM Mono',monospace;font-size:11px;color:var(--txt2);flex:1}
+/* ── COLORS ── */
+.color-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s;flex-shrink:0}
+.color-swatch.active{border-color:#fff;transform:scale(1.2)}
 
-/* toggle row */
-.togrow{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px;background:var(--sur2);border:1px solid var(--bd);
-  border-radius:var(--r);cursor:pointer;min-height:44px;user-select:none;
+/* ── PLATE OPTIONS ── */
+.plate-options{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.plate-btn{
+  padding:8px 4px;border-radius:9px;border:1px solid var(--border);
+  cursor:pointer;text-align:center;transition:all .15s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
 }
-.togl{width:36px;height:20px;background:var(--sur3);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
-.togl.on{background:var(--acc)}
-.togl::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
-.togl.on::after{transform:translateX(16px)}
-
-/* pill row */
-.pills{display:flex;gap:5px;flex-wrap:wrap}
-.pil{
-  padding:7px 12px;background:var(--sur2);border:1px solid var(--bd);
-  border-radius:20px;font-size:11px;font-weight:600;color:var(--txt2);
-  cursor:pointer;user-select:none;min-height:36px;display:flex;align-items:center;
-  transition:all .15s;
+.plate-btn:active{transform:scale(.93)}
+.plate-btn.active{border-color:var(--gold);}
+.plate-btn .pb-demo{
+  width:36px;height:22px;border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.55rem;font-weight:700;letter-spacing:.02em;
 }
-.pil.on{background:rgba(124,109,250,.15);border-color:var(--acc);color:var(--acc)}
+.plate-btn .pb-label{font-size:.58rem;color:var(--muted);letter-spacing:.06em}
+.plate-btn.active .pb-label{color:var(--gold)}
 
-/* text input */
-input[type=text]{
-  width:100%;padding:10px;background:var(--sur2);
-  border:1px solid var(--bd);border-radius:var(--r);
-  color:var(--txt);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
-  text-align:center;outline:none;min-height:44px;
+/* ── DIR BTNS ── */
+.dir-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dir-btn{
+  padding:8px;border-radius:8px;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);color:var(--muted);cursor:pointer;
+  text-align:center;font-size:.75rem;letter-spacing:.1em;transition:all .15s;
 }
-input[type=text]:focus{border-color:var(--acc)}
+.dir-btn.active{background:rgba(212,168,67,.12);border-color:var(--gold);color:var(--gold)}
 
-/* shape grid */
-.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.sbtn{
-  aspect-ratio:1;background:var(--sur2);border:1px solid var(--bd);
-  border-radius:var(--r);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:3px;padding:5px 3px;
-  cursor:pointer;user-select:none;transition:all .15s;
+/* ── SAVE BAR ── */
+.save-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent 0,var(--bg) 28%);
+  padding:20px 16px 26px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:200;
 }
-.sbtn.on{border-color:var(--acc);background:rgba(124,109,250,.12)}
-.sbtn svg{width:22px;height:22px}
-.slbl{font-size:8px;font-family:'DM Mono',monospace;color:var(--txt3);text-align:center}
-.sbtn.on .slbl{color:var(--acc)}
-
-/* actions */
-.acts{margin-top:16px;display:flex;flex-direction:column;gap:8px;padding-bottom:12px}
-.btn{
-  padding:14px;border:none;border-radius:var(--r);
-  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
-  letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;
-  justify-content:center;gap:8px;min-height:48px;
+.save-bar .max-wrap{width:100%;max-width:480px}
+#save-btn{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,#c9a84c,#f0d080,#c9a84c);
+  border:none;border-radius:12px;color:#1a1100;
+  font-family:'Noto Serif TC',serif;font-size:1rem;font-weight:700;
+  letter-spacing:.2em;cursor:pointer;box-shadow:0 4px 24px rgba(212,168,67,.35);
+  transition:opacity .2s,transform .15s;
 }
-.btn:active{opacity:.85;transform:scale(.97)}
-.btnp{background:var(--acc);color:#fff;box-shadow:0 4px 16px rgba(124,109,250,.3)}
-.btns{background:var(--sur2);color:var(--txt2);border:1px solid var(--bd)}
+#save-btn:active{opacity:.85;transform:scale(.97)}
+.save-hint{font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-align:center;margin-top:4px}
 
-/* preview */
-.prev{flex:1;display:flex;flex-direction:column;background:var(--bg);overflow:hidden;min-width:0}
-.prevtb{
-  display:flex;align-items:center;gap:8px;padding:10px 14px;
-  background:var(--sur);border-bottom:1px solid var(--bd);flex-shrink:0;flex-wrap:wrap;
-}
-.prevlb{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase}
-.bgrow{display:flex;gap:5px;margin-left:auto}
-.bgpil{
-  padding:5px 10px;border-radius:20px;font-size:10px;font-family:'DM Mono',monospace;
-  cursor:pointer;border:1px solid transparent;color:var(--txt3);user-select:none;
-  min-height:30px;display:flex;align-items:center;
-}
-.bgpil.on{background:var(--sur2);border-color:var(--bd);color:var(--txt)}
+/* ── PANES ── */
+.step-pane{display:none}
+.step-pane.active{display:block}
 
-.stage{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:24px;padding:24px 16px;transition:background .3s;overflow:hidden;
-}
-.stage.dark{background:#0d0f14}
-.stage.mid{background:#3a3a4a}
-.stage.lite{background:#e8eaf0}
-.stage.wht{background:#fff}
+/* ── AI SPINNER ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(212,168,67,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
 
-#svgMain{filter:drop-shadow(0 16px 48px rgba(0,0,0,.6));max-width:100%;height:auto}
-
-.szrow{display:flex;align-items:flex-end;gap:14px}
-.szitem{display:flex;flex-direction:column;align-items:center;gap:5px}
-.szlb{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3)}
-
-.infobar{
-  display:flex;align-items:center;gap:14px;padding:7px 14px;
-  background:var(--sur);border-top:1px solid var(--bd);flex-shrink:0;flex-wrap:wrap;
-  padding-bottom:calc(7px + var(--sfb));
-}
-.inf{font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3);display:flex;gap:5px}
-.inf b{font-weight:400;color:var(--txt2)}
-
-/* toast */
-.toast{
-  position:fixed;bottom:calc(20px + var(--sfb));left:50%;
-  transform:translateX(-50%) translateY(60px);
-  background:var(--sur2);border:1px solid var(--bd);color:var(--txt);
-  padding:10px 18px;border-radius:30px;font-size:12px;font-weight:600;
-  box-shadow:0 8px 30px rgba(0,0,0,.5);
-  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-  z-index:1000;white-space:nowrap;pointer-events:none;
-}
-.toast.show{transform:translateX(-50%) translateY(0)}
-
-/* mobile */
-@media(max-width:640px){
-  .main{flex-direction:column}
-  .ctrl{width:100%;min-width:0;border-right:none;border-bottom:1px solid var(--bd);max-height:58vh}
-  .prev{min-height:38vh}
-  .szrow{display:none}
-  .topbar-badge{display:none}
-}
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 </style>
-<meta name="application-name" content="早安您好"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="早安您好"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
+<meta name="application-name" content="GOOD MORNING"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="GOOD MORNING"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
@@ -216,583 +293,858 @@ input[type=text]:focus{border-color:var(--acc)}
   }</script></head>
 <body>
 
-<div class="topbar">
-  <div class="topbar-title"><div class="dot"></div>Icon Generator Pro</div>
-  <div class="topbar-badge">SVG · 24px Grid</div>
+<header>
+  <div class="header-logo">
+    <div class="logo">☀ 早安卡片</div>
+    <div class="sub">選圖 · 填字 · AI 祝福 · 一鍵分享</div>
+  </div>
+  <div class="elder-toggle-wrap">
+    <span class="elabel">長輩模式</span>
+    <label class="elder-sw">
+      <input type="checkbox" id="elder-check">
+      <span class="knob"></span>
+    </label>
+    <span class="elabel" id="elder-label">關閉</span>
+  </div>
+</header>
+
+<div class="steps" id="steps">
+  <div class="step-tab active" data-step="0"><span class="num">1</span>選背景</div>
+  <div class="step-tab" data-step="1"><span class="num">2</span>AI祝福</div>
+  <div class="step-tab" data-step="2"><span class="num">3</span>填文字</div>
+  <div class="step-tab" data-step="3"><span class="num">4</span>排版</div>
 </div>
 
-<div class="main">
-
-  <!-- ── Controls ── -->
-  <div class="ctrl">
-
-    <div class="sec">底座 Base</div>
-
-    <!-- show circle toggle -->
-    <div class="fld">
-      <div class="togrow" id="tog-showCircle">
-        <span style="font-size:12px;font-weight:600;color:var(--txt2)">外圍底座</span>
-        <div class="togl on"></div>
-      </div>
-    </div>
-
-    <!-- base color -->
-    <div class="fld">
-      <div class="flb">底座顏色</div>
-      <div class="colf" id="wrap-circleColor">
-        <div class="swch" style="background:#8d8eff"><input type="color" id="circleColor" value="#8d8eff"></div>
-        <div class="chex" id="hex-circleColor">#8D8EFF</div>
-      </div>
-    </div>
-
-    <!-- corner radius -->
-    <div class="fld">
-      <div class="flb">圓角 <em id="v-corner">2</em></div>
-      <input type="range" id="r-corner" min="0" max="45" step="1" value="2">
-    </div>
-
-    <!-- stroke width -->
-    <div class="fld">
-      <div class="flb">描邊寬度 <em id="v-stroke">0.0</em></div>
-      <input type="range" id="r-stroke" min="0" max="2" step="0.1" value="0">
-    </div>
-
-    <!-- stroke color -->
-    <div class="fld">
-      <div class="flb">描邊顏色</div>
-      <div class="colf" id="wrap-strokeColor">
-        <div class="swch" style="background:#ffffff"><input type="color" id="strokeColor" value="#ffffff"></div>
-        <div class="chex" id="hex-strokeColor">#FFFFFF</div>
-      </div>
-    </div>
-
-    <div class="sec">幾何層 Geo</div>
-
-    <!-- geo style pills -->
-    <div class="fld">
-      <div class="flb">樣式</div>
-      <div class="pills" id="pills-geoStyle">
-        <div class="pil on" data-v="star">星形</div>
-        <div class="pil" data-v="poly">多邊形</div>
-        <div class="pil" data-v="ring">環形</div>
-        <div class="pil" data-v="none">隱藏</div>
-      </div>
-    </div>
-
-    <!-- grad start -->
-    <div class="fld">
-      <div class="flb">漸層起始</div>
-      <div class="colf" id="wrap-gradStart">
-        <div class="swch" style="background:#D4D486"><input type="color" id="gradStart" value="#D4D486"></div>
-        <div class="chex" id="hex-gradStart">#D4D486</div>
-      </div>
-    </div>
-
-    <!-- grad end -->
-    <div class="fld">
-      <div class="flb">漸層結束</div>
-      <div class="colf" id="wrap-gradEnd">
-        <div class="swch" style="background:#808000"><input type="color" id="gradEnd" value="#808000"></div>
-        <div class="chex" id="hex-gradEnd">#808000</div>
-      </div>
-    </div>
-
-    <!-- points -->
-    <div class="fld">
-      <div class="flb">頂點數 <em id="v-pts">8</em></div>
-      <input type="range" id="r-pts" min="3" max="20" step="1" value="8">
-    </div>
-
-    <!-- ratio -->
-    <div class="fld">
-      <div class="flb">內縮比例 <em id="v-ratio">0.70</em></div>
-      <input type="range" id="r-ratio" min="0.2" max="1.0" step="0.05" value="0.7">
-    </div>
-
-    <!-- rotation -->
-    <div class="fld">
-      <div class="flb">旋轉 <em id="v-rot">0</em>°</div>
-      <input type="range" id="r-rot" min="0" max="360" step="1" value="0">
-    </div>
-
-    <div class="sec">核心 Core</div>
-
-    <!-- core type pills -->
-    <div class="fld">
-      <div class="flb">類型</div>
-      <div class="pills" id="pills-coreType">
-        <div class="pil" data-v="icon">圖案</div>
-        <div class="pil on" data-v="text">文字</div>
-        <div class="pil" data-v="none">隱藏</div>
-      </div>
-    </div>
-
-    <!-- icon box -->
-    <div id="box-icon" style="display:none">
-      <div class="fld">
-        <div class="sgrid" id="shapeGrid"></div>
-      </div>
-      <div class="fld">
-        <div class="flb">填充顏色</div>
-        <div class="colf" id="wrap-iconColor">
-          <div class="swch" style="background:#FFFF00"><input type="color" id="iconColor" value="#FFFF00"></div>
-          <div class="chex" id="hex-iconColor">#FFFF00</div>
-        </div>
-      </div>
-      <div class="fld">
-        <div class="flb">尺寸 <em id="v-isize">0.45</em></div>
-        <input type="range" id="r-isize" min="0.2" max="0.9" step="0.01" value="0.45">
-      </div>
-      <div class="fld">
-        <div class="flb">垂直偏移 <em id="v-iy">0.0</em></div>
-        <input type="range" id="r-iy" min="-3" max="3" step="0.1" value="0">
-      </div>
-      <div class="fld">
-        <div class="togrow" id="tog-iconShadow">
-          <span style="font-size:12px;font-weight:600;color:var(--txt2)">陰影效果</span>
-          <div class="togl"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- text box -->
-    <div id="box-text">
-      <div class="fld">
-        <div class="flb">文字內容</div>
-        <input type="text" id="innerText" value="AA" maxlength="3">
-      </div>
-      <div class="fld">
-        <div class="flb">文字顏色</div>
-        <div class="colf" id="wrap-textColor">
-          <div class="swch" style="background:#FFFFFF"><input type="color" id="textColor" value="#FFFFFF"></div>
-          <div class="chex" id="hex-textColor">#FFFFFF</div>
-        </div>
-      </div>
-      <div class="fld">
-        <div class="flb">字體大小 <em id="v-fs">6</em></div>
-        <input type="range" id="r-fs" min="2" max="12" step="0.5" value="6">
-      </div>
-    </div>
-
-    <div class="acts">
-      <button class="btn btnp" id="btn-copy">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
-        複製 SVG 代碼
-      </button>
-      <button class="btn btns" id="btn-dl">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        下載 512px SVG
-      </button>
-    </div>
-
-  </div><!-- /ctrl -->
-
-  <!-- ── Preview ── -->
-  <div class="prev">
-    <div class="prevtb">
-      <div class="prevlb">預覽</div>
-      <div class="bgrow" id="bgrow">
-        <div class="bgpil on" data-v="dark">暗</div>
-        <div class="bgpil" data-v="mid">灰</div>
-        <div class="bgpil" data-v="lite">淺</div>
-        <div class="bgpil" data-v="wht">白</div>
-      </div>
-    </div>
-
-    <div class="stage dark" id="stage">
-      <svg id="svgMain" width="220" height="220" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" id="sStart" stop-color="#D4D486"></stop>
-            <stop offset="100%" id="sEnd" stop-color="#808000"></stop>
-          </linearGradient>
-          <filter id="fShadow" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="0.5" stdDeviation="0.8" flood-color="rgba(0,0,0,0.7)"></feDropShadow>
-          </filter>
-        </defs>
-        <rect id="elRect" x="0.5" y="0.5" width="23" height="23" rx="0.5" ry="0.5" fill="#8d8eff"></rect>
-        <circle id="elCirc" cx="12" cy="12" r="11.5" fill="#8d8eff" style="display:none"></circle>
-        <path id="elGeo" d="" fill="url(#g1)"></path>
-        <g id="elSlot"></g>
-      </svg>
-
-      <div class="szrow" id="szrow"></div>
-    </div>
-
-    <div class="infobar">
-      <div class="inf">座標系 <b>24×24</b></div>
-      <div class="inf">輸出 <b>512px</b></div>
-      <div class="inf">格式 <b>SVG</b></div>
-      <div class="inf">頂點 <b id="inf-pts">–</b></div>
+<main>
+  <!-- 預覽 -->
+  <div class="preview-wrap">
+    <div class="canvas-outer">
+      <canvas id="card-canvas" width="810" height="1080"></canvas>
     </div>
   </div>
 
-</div><!-- /main -->
+  <!-- STEP 1 : 選背景 -->
+  <div class="step-pane active" id="pane-0">
+    <div class="panel-section">
+      <div class="sec-title">🖼 內建背景主題</div>
+      <div class="tpl-scroll" id="tpl-scroll"></div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">📷 上傳自己的背景圖片</div>
+      <!-- Upload drop zone -->
+      <div id="upload-zone" style="
+        border:2px dashed rgba(212,168,67,.35);border-radius:12px;
+        padding:28px 16px;text-align:center;cursor:pointer;
+        background:rgba(212,168,67,.04);transition:all .2s;
+      ">
+        <div style="font-size:2.2rem;margin-bottom:8px">🖼️</div>
+        <div style="font-size:.82rem;color:var(--gold);letter-spacing:.1em;margin-bottom:4px">點擊或拖曳上傳圖片</div>
+        <div style="font-size:.65rem;color:var(--muted)">支援 JPG、PNG、HEIC · 建議比例 3:4</div>
+        <input type="file" id="bg-upload" accept="image/*">
+      </div>
+      <!-- uploaded preview -->
+      <div id="uploaded-preview" style="display:none;margin-top:12px;position:relative">
+        <canvas id="up-thumb" width="90" height="120" style="border-radius:8px;border:2px solid var(--gold);display:block"></canvas>
+        <button id="clear-upload" style="
+          position:absolute;top:-6px;right:calc(100% - 96px);
+          width:22px;height:22px;border-radius:50%;background:#c0392b;
+          border:none;color:#fff;font-size:.7rem;cursor:pointer;line-height:22px;text-align:center;
+        ">✕</button>
+        <div style="font-size:.65rem;color:var(--gold);margin-top:6px;letter-spacing:.08em">✓ 已套用自訂背景</div>
+      </div>
+    </div>
+  </div>
 
-<div class="toast" id="toast"></div>
+  <!-- STEP 2 : AI 祝福語 -->
+  <div class="step-pane" id="pane-1">
+    <div class="panel-section">
+      <div class="sec-title">🤖 AI 自動生成祝福語</div>
+      <div class="ai-box">
+        <div class="ai-box-title">✨ 告訴 AI 你想傳遞什麼</div>
+        <div class="ai-controls">
+          <div class="ai-select-row">
+            <select id="ai-occasion">
+              <option value="早安問候">☀️ 早安問候</option>
+              <option value="生日祝福">🎂 生日祝福</option>
+              <option value="節慶賀語">🎉 節慶賀語</option>
+              <option value="平安祝福">🙏 平安祝福</option>
+              <option value="加油打氣">💪 加油打氣</option>
+              <option value="感謝心意">💛 感謝心意</option>
+              <option value="康復祝福">🌿 康復祝福</option>
+            </select>
+            <select id="ai-style">
+              <option value="溫暖親切">溫暖親切</option>
+              <option value="優雅詩意">優雅詩意</option>
+              <option value="俏皮活潑">俏皮活潑</option>
+              <option value="禪意深邃">禪意深邃</option>
+              <option value="簡短有力">簡短有力</option>
+            </select>
+          </div>
+          <input type="text" id="ai-extra" placeholder="補充說明（如：送給媽媽、秋天、登山）" maxlength="30">
+          <button class="ai-btn" id="ai-gen-btn">
+            <span class="btn-icon">✨</span> AI 幫我生成祝福語
+          </button>
+        </div>
+        <div class="ai-result placeholder" id="ai-result">點擊上方按鈕，讓 AI 生成專屬祝福語…</div>
+        <button class="ai-use-btn" id="ai-use-btn" style="display:none">套用這段文字 →</button>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">📚 常用語句快選</div>
+      <div class="phrase-cats" id="phrase-cats"></div>
+      <div class="phrase-list" id="phrase-list"></div>
+    </div>
+  </div>
+
+  <!-- STEP 3 : 填文字 -->
+  <div class="step-pane" id="pane-2">
+    <div class="panel-section">
+      <div class="sec-title">✏ 自訂文字</div>
+      <div class="input-group">
+        <div class="input-row">
+          <label>主標題（最多 10 字）</label>
+          <input type="text" id="in-title" placeholder="早安 ☀️" maxlength="10">
+        </div>
+        <div class="input-row">
+          <label>祝福語（最多 60 字）</label>
+          <textarea id="in-msg" rows="4" placeholder="願你今天充滿陽光，笑口常開！" maxlength="60"></textarea>
+        </div>
+        <div class="input-row">
+          <label>署名（選填）</label>
+          <input type="text" id="in-sign" placeholder="來自小美的問候" maxlength="18">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 : 排版 -->
+  <div class="step-pane" id="pane-3">
+    <div class="panel-section">
+      <div class="sec-title">🔤 字體風格</div>
+      <div class="font-options" id="font-options"></div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">📏 文字大小</div>
+      <div class="slider-row">
+        <label>小</label>
+        <input type="range" id="font-size-slider" min="70" max="130" value="100" step="5">
+        <label>大</label>
+        <span class="slider-val" id="fs-val">100%</span>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">🎨 文字顏色</div>
+      <div class="color-row" id="color-row"></div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">↕ 文字方向</div>
+      <div class="dir-btns">
+        <div class="dir-btn active" data-dir="h">橫式排版</div>
+        <div class="dir-btn" data-dir="v">直式排版</div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">🪟 文字背板</div>
+      <div class="plate-options" id="plate-options"></div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">💡 其他設定</div>
+      <div class="toggle-row">
+        <span>文字陰影（複雜背景建議開啟）</span>
+        <label class="toggle"><input type="checkbox" id="tog-shadow" checked=""><span class="knob"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>顯示今日日期</span>
+        <label class="toggle"><input type="checkbox" id="tog-date" checked=""><span class="knob"></span></label>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="save-bar">
+  <div class="max-wrap">
+    <button id="save-btn">📥 儲存圖片 → 傳至 LINE</button>
+    <p class="save-hint">儲存後長按圖片即可分享到 LINE</p>
+  </div>
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// SHAPES
-// ═══════════════════════════════════════════════════════════════
-var SHP = {
-  triangle: {d:'M12,3 L21.5,20.5 H2.5 Z',          lbl:'三角', dx:0, dy:-0.4},
-  square:   {d:'M4,4H20V20H4Z',                      lbl:'方形', dx:0, dy:0},
-  circle:   {d:'M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Z', lbl:'圓形', dx:0, dy:0},
-  star5:    {d:'M12,2 L14.4,9.2H22L16,13.8 18.4,21 12,16.4 5.6,21 8,13.8 2,9.2H9.6Z', lbl:'五星', dx:0, dy:0},
-  star6:    {d:'M12,2 L14.196,7.804 20,6 16.196,11 20,16 14.196,14.196 12,20 9.804,14.196 4,16 7.804,11 4,6 9.804,7.804Z', lbl:'六芒', dx:0, dy:0},
-  diamond:  {d:'M12,1 L23,12 12,23 1,12Z',           lbl:'菱形', dx:0, dy:0},
-  heart:    {d:'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z', lbl:'愛心', dx:0, dy:0},
-  bolt:     {d:'M7,2v11h3v9l7-12h-4l4-8H7z',         lbl:'閃電', dx:0, dy:0},
-  moon:     {d:'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z', lbl:'月亮', dx:0, dy:0},
-  cross:    {d:'M10,2V10H2V14H10V22H14V14H22V10H14V2Z', lbl:'十字', dx:0, dy:0},
-  shield:   {d:'M12,2L3,7v5c0,5.55 3.84,10.74 9,12 5.16-1.26 9-6.45 9-12V7L12,2Z', lbl:'盾牌', dx:0, dy:0},
-  crown:    {d:'M2 19h20l-2-8-4 4-4-8-4 8-4-4-2 8Z', lbl:'皇冠', dx:0, dy:0}
+window.onerror=function(msg,src,line,col,err){
+  console.log('Card error:',msg,'line:',line);
+  return true; // suppress uncaught
+};
+// ═══════════════════════════════════════════
+//  TEMPLATES (Canvas-drawn backgrounds)
+// ═══════════════════════════════════════════
+const TEMPLATES = [
+  { id:'sunrise', label:'旭日東昇', draw(c){
+    const g=c.createLinearGradient(0,0,0,1080);
+    g.addColorStop(0,'#1a0533');g.addColorStop(.3,'#c0392b');g.addColorStop(.55,'#e67e22');g.addColorStop(.75,'#f1c40f');g.addColorStop(1,'#fef9e7');
+    c.fillStyle=g;c.fillRect(0,0,810,1080);
+    c.save();c.globalAlpha=.85;
+    const sg=c.createRadialGradient(405,580,20,405,580,260);
+    sg.addColorStop(0,'#fff7a1');sg.addColorStop(.4,'#f39c12');sg.addColorStop(1,'transparent');
+    c.fillStyle=sg;c.beginPath();c.arc(405,580,260,0,Math.PI*2);c.fill();c.restore();
+    c.save();c.globalAlpha=.1;c.strokeStyle='#fff';c.lineWidth=3;
+    for(let i=0;i<24;i++){const a=i*Math.PI/12;c.beginPath();c.moveTo(405+160*Math.cos(a),580+160*Math.sin(a));c.lineTo(405+360*Math.cos(a),580+360*Math.sin(a));c.stroke();}
+    c.restore();
+    c.save();c.fillStyle='rgba(10,0,30,0.55)';c.beginPath();
+    c.moveTo(0,1080);c.lineTo(0,720);c.lineTo(120,620);c.lineTo(260,700);c.lineTo(405,550);c.lineTo(550,700);c.lineTo(690,610);c.lineTo(810,660);c.lineTo(810,1080);c.fill();c.restore();
+  }},
+  { id:'sakura', label:'花語春風', draw(c){
+    const g=c.createLinearGradient(0,0,0,1080);
+    g.addColorStop(0,'#fce4ec');g.addColorStop(.5,'#f8bbd0');g.addColorStop(1,'#e1bee7');
+    c.fillStyle=g;c.fillRect(0,0,810,1080);
+    function prng(n){return((n*1664525+1013904223)>>>0)/4294967296}
+    for(let i=0;i<60;i++){
+      const x=prng(i*7+1)*810,y=prng(i*7+2)*1080,r=prng(i*7+3)*20+8,a=prng(i*7+4)*Math.PI*2,op=prng(i*7+5)*.5+.15;
+      c.save();c.globalAlpha=op;c.translate(x,y);c.rotate(a);
+      c.fillStyle='#c2185b';
+      for(let k=0;k<5;k++){c.save();c.rotate(k*Math.PI*2/5);c.beginPath();c.ellipse(0,-r,r*.4,r*.85,0,0,Math.PI*2);c.fill();c.restore();}
+      c.restore();
+    }
+  }},
+  { id:'ocean', label:'海天一色', draw(c){
+    const g=c.createLinearGradient(0,0,0,1080);
+    g.addColorStop(0,'#0d47a1');g.addColorStop(.5,'#1976d2');g.addColorStop(.65,'#29b6f6');g.addColorStop(1,'#80deea');
+    c.fillStyle=g;c.fillRect(0,0,810,1080);
+    c.save();c.globalAlpha=.25;
+    const sr=c.createRadialGradient(405,300,0,405,300,350);sr.addColorStop(0,'#fff');sr.addColorStop(1,'transparent');
+    c.fillStyle=sr;c.fillRect(0,0,810,1080);c.restore();
+    c.save();c.strokeStyle='rgba(255,255,255,0.22)';c.lineWidth=3;
+    for(let row=0;row<9;row++){const y=500+row*65;c.beginPath();
+      for(let x=0;x<=810;x+=4){const wy=y+Math.sin((x*.015)+row*.8)*22;x===0?c.moveTo(x,wy):c.lineTo(x,wy);}c.stroke();}
+    c.restore();
+  }},
+  { id:'mountain', label:'高山流雲', draw(c){
+    const g=c.createLinearGradient(0,0,0,1080);
+    g.addColorStop(0,'#b0bec5');g.addColorStop(.3,'#eceff1');g.addColorStop(.6,'#f5f5f5');g.addColorStop(1,'#e8f5e9');
+    c.fillStyle=g;c.fillRect(0,0,810,1080);
+    c.save();c.fillStyle='rgba(96,125,139,0.55)';c.beginPath();
+    c.moveTo(0,1080);c.lineTo(0,800);c.lineTo(200,550);c.lineTo(350,680);c.lineTo(500,520);c.lineTo(650,640);c.lineTo(810,560);c.lineTo(810,1080);c.fill();c.restore();
+    c.save();c.fillStyle='rgba(144,164,174,0.5)';c.beginPath();
+    c.moveTo(0,1080);c.lineTo(0,900);c.lineTo(150,700);c.lineTo(300,780);c.lineTo(450,650);c.lineTo(600,740);c.lineTo(810,680);c.lineTo(810,1080);c.fill();c.restore();
+    c.save();c.fillStyle='rgba(255,255,255,0.82)';
+    [[160,180,80],[580,140,65],[380,100,55],[700,230,70],[80,310,50]].forEach(([x,y,r])=>{
+      c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.arc(x+r*.8,y-r*.4,r*.7,0,Math.PI*2);c.arc(x-r*.7,y-r*.3,r*.6,0,Math.PI*2);c.fill();});
+    c.restore();
+  }},
+  { id:'lotus', label:'禪意蓮池', draw(c){
+    const g=c.createLinearGradient(0,0,0,1080);
+    g.addColorStop(0,'#1a2a1a');g.addColorStop(.5,'#2e4a2e');g.addColorStop(1,'#1a3030');
+    c.fillStyle=g;c.fillRect(0,0,810,1080);
+    c.save();c.globalAlpha=.5;
+    const mg=c.createRadialGradient(405,220,10,405,220,160);
+    mg.addColorStop(0,'#fffff0');mg.addColorStop(.5,'#ffd54f');mg.addColorStop(1,'transparent');
+    c.fillStyle=mg;c.beginPath();c.arc(405,220,160,0,Math.PI*2);c.fill();c.restore();
+    [[200,800],[405,750],[610,820],[130,900],[680,890],[405,950]].forEach(([x,y])=>{
+      c.save();c.translate(x,y);
+      for(let i=0;i<8;i++){c.save();c.rotate(i*Math.PI/4);
+        const lg=c.createLinearGradient(0,-80,0,0);lg.addColorStop(0,'#f48fb1');lg.addColorStop(1,'#ce93d8');
+        c.fillStyle=lg;c.globalAlpha=.7;c.beginPath();c.ellipse(0,-50,18,45,0,0,Math.PI*2);c.fill();c.restore();}
+      c.fillStyle='#ffcc02';c.globalAlpha=.9;c.beginPath();c.arc(0,0,14,0,Math.PI*2);c.fill();c.restore();});
+  }},
+  { id:'forest', label:'晨林秘境', draw(c){
+    const g=c.createLinearGradient(0,0,0,1080);
+    g.addColorStop(0,'#0d1f0d');g.addColorStop(.4,'#1b5e20');g.addColorStop(.7,'#33691e');g.addColorStop(1,'#558b2f');
+    c.fillStyle=g;c.fillRect(0,0,810,1080);
+    c.save();c.globalAlpha=.1;
+    for(let i=0;i<12;i++){const x=50+i*65;c.fillStyle='#c8e6c9';c.beginPath();c.moveTo(x-50,0);c.lineTo(x+50,0);c.lineTo(x+130,1080);c.lineTo(x-130,1080);c.fill();}
+    c.restore();
+    c.save();c.fillStyle='rgba(0,20,0,0.7)';
+    [0,80,160,240,320,400,480,560,640,720].forEach(tx=>{
+      const h=400+Math.sin(tx*.05)*100;
+      c.beginPath();
+      for(let lv=0;lv<4;lv++){const ly=h-lv*80,lw=120-lv*20;c.moveTo(tx+40,ly);c.lineTo(tx-lw/2,ly+75);c.lineTo(tx+lw/2,ly+75);}
+      c.fillRect(tx+26,h,28,1080-h);c.fill();});
+    c.restore();
+  }},
+  { id:'gold', label:'金韻祥和', draw(c){
+    c.fillStyle='#1a0a00';c.fillRect(0,0,810,1080);
+    const g=c.createRadialGradient(405,540,80,405,540,580);
+    g.addColorStop(0,'#3d1c00');g.addColorStop(1,'#0d0500');c.fillStyle=g;c.fillRect(0,0,810,1080);
+    c.save();c.strokeStyle='#c9a84c';c.lineWidth=1.5;c.globalAlpha=.35;
+    c.strokeRect(50,50,710,980);c.strokeRect(66,66,678,948);
+    for(let i=-20;i<40;i++){c.globalAlpha=.05;c.beginPath();c.moveTo(i*60,0);c.lineTo(i*60+1080,1080);c.stroke();c.beginPath();c.moveTo(i*60+1080,0);c.lineTo(i*60,1080);c.stroke();}
+    c.globalAlpha=.22;c.strokeStyle='#f0cc70';c.lineWidth=2;
+    [100,160,210].forEach(r=>{c.beginPath();c.arc(405,540,r,0,Math.PI*2);c.stroke();});
+    for(let i=0;i<12;i++){const a=i*Math.PI/6;c.beginPath();c.moveTo(405+100*Math.cos(a),540+100*Math.sin(a));c.lineTo(405+210*Math.cos(a),540+210*Math.sin(a));c.stroke();}
+    c.restore();
+  }},
+  { id:'newyear', label:'新年快樂', draw(c){
+    const g=c.createLinearGradient(0,0,810,1080);
+    g.addColorStop(0,'#7f0000');g.addColorStop(.5,'#c62828');g.addColorStop(1,'#880e4f');
+    c.fillStyle=g;c.fillRect(0,0,810,1080);
+    c.save();c.globalAlpha=.12;c.strokeStyle='#ffd700';c.lineWidth=2;
+    for(let x=-50;x<870;x+=80){for(let y=-50;y<1140;y+=80){c.save();c.translate(x,y);c.rotate(Math.PI/4);c.strokeRect(-20,-20,40,40);c.restore();}}
+    c.restore();
+    c.save();
+    [[200,180],[610,200],[405,120],[130,330],[680,310]].forEach(([lx,ly])=>{
+      c.save();c.translate(lx,ly);
+      const lg=c.createRadialGradient(0,0,5,0,0,45);lg.addColorStop(0,'#ffeb3b');lg.addColorStop(.5,'#ff8f00');lg.addColorStop(1,'#e65100');
+      c.fillStyle=lg;c.globalAlpha=.9;c.beginPath();c.ellipse(0,0,32,50,0,0,Math.PI*2);c.fill();
+      c.globalAlpha=.18;const gg=c.createRadialGradient(0,0,0,0,0,90);gg.addColorStop(0,'#fff9c4');gg.addColorStop(1,'transparent');
+      c.fillStyle=gg;c.beginPath();c.arc(0,0,90,0,Math.PI*2);c.fill();c.restore();});
+    c.restore();
+  }},
+];
+
+const FONTS = [
+  { id:'mashan',  label:'書法體', sample:'早安', stack:"'Ma Shan Zheng',serif" },
+  { id:'xiaowei', label:'小楷體', sample:'早安', stack:"'ZCOOL XiaoWei',serif" },
+  { id:'serif',   label:'明 體',  sample:'早安', stack:"'Noto Serif TC',serif" },
+  { id:'sans',    label:'圓 體',  sample:'早安', stack:"'Noto Sans TC',sans-serif" },
+];
+
+const TEXT_COLORS = [
+  {c:'#ffffff',l:'純白'},{c:'#fff8dc',l:'奶白'},{c:'#ffe082',l:'金黃'},
+  {c:'#ffcdd2',l:'淡粉'},{c:'#b3e5fc',l:'天藍'},{c:'#c8e6c9',l:'嫩綠'},
+  {c:'#2c1810',l:'深棕'},{c:'#1a1a1a',l:'墨黑'},
+];
+
+const PHRASES = {
+  '早安問候':[
+    {t:'早安！願你今天充滿陽光，笑口常開！'},
+    {t:'美好的一天從現在開始，早安！'},
+    {t:'起床了！今天也要元氣滿滿喔！'},
+    {t:'早晨的第一縷陽光，是我對你最美的祝福。'},
+    {t:'新的一天，帶著微笑出發，好事自然來。'},
+    {t:'早安！願你今天遇見的每一件事，都恰到好處。'},
+  ],
+  '平安祝福':[
+    {t:'願你平安喜樂，事事順心。'},
+    {t:'身體健康，萬事如意，每天都開開心心！'},
+    {t:'保重身體，平安就是福。'},
+    {t:'心若安定，處處是晴天。願你日日平安。'},
+    {t:'願你此刻安好，往後的每一天也都如此。'},
+  ],
+  '勵志名言':[
+    {t:'千里之行，始於足下。', s:'老子'},
+    {t:'不積跬步，無以至千里；不積小流，無以成江海。', s:'荀子'},
+    {t:'寶劍鋒從磨礪出，梅花香自苦寒來。', s:'古諺'},
+    {t:'路漫漫其修遠兮，吾將上下而求索。', s:'屈原'},
+    {t:'業精於勤，荒於嬉；行成於思，毀於隨。', s:'韓愈'},
+    {t:'天下事有難易乎？為之，則難者亦易矣。', s:'彭端淑'},
+    {t:'志不強者智不達。', s:'墨子'},
+    {t:'知之者不如好之者，好之者不如樂之者。', s:'孔子'},
+  ],
+  '人生哲理':[
+    {t:'人生就像一杯茶，不會苦一輩子，但總會苦一陣子。', s:''},
+    {t:'你若盛開，蝴蝶自來；你若精彩，天自安排。', s:''},
+    {t:'不要因為走得太遠，就忘了當初為什麼出發。', s:''},
+    {t:'生命中最美好的事，往往是意外得來的。', s:''},
+    {t:'慢慢走，欣賞啊！', s:'朱自清'},
+    {t:'活在當下，把握今天，才是最珍貴的財富。', s:''},
+    {t:'凡走過，必留下痕跡。勇敢走，才有風景。', s:''},
+  ],
+  '積極正能量':[
+    {t:'每一個清晨，都是全新的開始。'},
+    {t:'只要努力，就算慢也沒關係，重要的是不停步。'},
+    {t:'微笑是最美的妝容，今天也要閃閃發光！'},
+    {t:'你比你想像的更堅強，比你以為的更勇敢。'},
+    {t:'今天的努力，是明天最好的禮物。'},
+    {t:'相信自己，你已經比昨天更好了。'},
+    {t:'不怕慢，只怕站。前進一步，就是進步。'},
+  ],
+  '節氣問候':[
+    {t:'天氣漸涼，多添衣裳，願你溫暖過好每一天！'},
+    {t:'春暖花開，願你如花般美麗，如春風般溫柔。'},
+    {t:'秋高氣爽，願你心曠神怡，萬事大吉！'},
+    {t:'夏日炎炎，多喝水，清涼一夏，平安健康。'},
+    {t:'冬日暖陽，願你心中也藏一份溫暖與從容。'},
+  ],
 };
 
-// ═══════════════════════════════════════════════════════════════
-// STATE — single source of truth, all typed correctly
-// ═══════════════════════════════════════════════════════════════
-var G = {
-  showCircle:  true,
-  circleColor: '#8d8eff',
-  corner:      2,
-  strokeW:     0,
-  strokeColor: '#ffffff',
-  gradStart:   '#D4D486',
-  gradEnd:     '#808000',
-  geoStyle:    'star',
-  pts:         8,
-  ratio:       0.70,
-  rot:         0,
-  coreType:    'text',
-  shape:       'triangle',
-  iconColor:   '#FFFF00',
-  iconSize:    0.45,
-  iconY:       0,
-  iconShadow:  false,
-  txt:         'AA',
-  txtColor:    '#FFFFFF',
-  fontSize:    6
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let state = {
+  tpl: TEMPLATES[0],
+  customBgImg: null,   // ← 上傳的自訂背景
+  title: '',
+  msg: '',
+  sign: '',
+  font: FONTS[0],
+  fontScale: 1.0,
+  color: '#ffffff',
+  dir: 'h',
+  shadow: true,
+  date: true,
+  elder: false,
+  plate: 'dark',   // 'none' | 'dark' | 'light' | 'blur' | 'gold'
 };
 
-// ═══════════════════════════════════════════════════════════════
-// GEO PATH — pure function, guaranteed integer pts
-// ═══════════════════════════════════════════════════════════════
-function geoPath(pts, ratio, rot, style) {
-  pts = pts | 0; // bitwise OR → integer conversion, fast
-  var cx=12, cy=12, rOut=8.5;
-  if (style === 'none') return '';
-  if (style === 'ring') {
-    var rIn = rOut * ratio;
-    return 'M '+(cx+rOut)+','+cy+
-           ' A '+rOut+','+rOut+' 0 1 0 '+(cx-rOut)+','+cy+
-           ' A '+rOut+','+rOut+' 0 1 0 '+(cx+rOut)+','+cy+' Z'+
-           ' M '+(cx+rIn)+','+cy+
-           ' A '+rIn+','+rIn+' 0 1 1 '+(cx-rIn)+','+cy+
-           ' A '+rIn+','+rIn+' 0 1 1 '+(cx+rIn)+','+cy+' Z';
-  }
-  var star = style === 'star';
-  var count = star ? pts*2 : pts;
-  var rotR = rot * Math.PI / 180;
-  var d = '';
-  for (var i=0; i<count; i++) {
-    var a = (Math.PI*2/count)*i - Math.PI/2 + rotR;
-    var r = (star && i%2===1) ? rOut*ratio : rOut;
-    d += (i===0?'M':'L') + (cx + r*Math.cos(a)).toFixed(3)+','+(cy + r*Math.sin(a)).toFixed(3);
-  }
-  return d+'Z';
+// ═══════════════════════════════════════════
+//  BUILD UI
+// ═══════════════════════════════════════════
+
+// Template thumbnails
+const tplScroll = document.getElementById('tpl-scroll');
+// Upload card first
+const upCard = document.createElement('div');
+upCard.className='tpl-upload-card';
+upCard.innerHTML='<span class="upload-icon">📷</span><span class="upload-label" style="font-size:.6rem;color:var(--gold);letter-spacing:.08em">上傳圖片</span>';
+upCard.addEventListener('click',()=>document.getElementById('bg-upload').click());
+tplScroll.appendChild(upCard);
+
+TEMPLATES.forEach((t,i)=>{
+  const card=document.createElement('div');
+  card.className='tpl-card'+(i===0?' active':'');
+  const tc=document.createElement('canvas');tc.width=80;tc.height=107;
+  const tcx=tc.getContext('2d');tcx.save();tcx.scale(80/810,107/1080);t.draw(tcx);tcx.restore();
+  card.appendChild(tc);
+  const lbl=document.createElement('div');lbl.className='tpl-label';lbl.textContent=t.label;card.appendChild(lbl);
+  card.addEventListener('click',()=>{
+    document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
+    card.classList.add('active');
+    state.tpl=t;state.customBgImg=null;
+    document.getElementById('uploaded-preview').style.display='none';
+    draw();
+  });
+  tplScroll.appendChild(card);
+});
+
+// ── Upload zone ──
+const bgUpload = document.getElementById('bg-upload');
+const uploadZone = document.getElementById('upload-zone');
+const uploadedPreview = document.getElementById('uploaded-preview');
+const upThumb = document.getElementById('up-thumb');
+
+function loadUploadedBg(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      state.customBgImg=img;
+      // thumbnail
+      const tc2=upThumb.getContext('2d');
+      tc2.clearRect(0,0,90,120);
+      const sc=Math.max(90/img.width,120/img.height);
+      const w=img.width*sc,h=img.height*sc;
+      tc2.drawImage(img,(90-w)/2,(120-h)/2,w,h);
+      uploadedPreview.style.display='block';
+      // deselect template cards
+      document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
+      draw();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
+bgUpload.addEventListener('change',e=>loadUploadedBg(e.target.files[0]));
+uploadZone.addEventListener('click',()=>bgUpload.click());
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.style.borderColor='var(--gold)';});
+uploadZone.addEventListener('dragleave',()=>{uploadZone.style.borderColor='rgba(212,168,67,.35)';});
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.style.borderColor='rgba(212,168,67,.35)';loadUploadedBg(e.dataTransfer.files[0]);});
+document.getElementById('clear-upload').addEventListener('click',()=>{
+  state.customBgImg=null;uploadedPreview.style.display='none';
+  document.querySelectorAll('.tpl-card').forEach((c,i)=>{if(i===0)c.classList.add('active');});
+  state.tpl=TEMPLATES[0];draw();
+});
 
-// ═══════════════════════════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════════════════════════
-var NS = 'http://www.w3.org/2000/svg';
+// ── Phrase library ──
+const phraseCatsEl=document.getElementById('phrase-cats');
+const phraseListEl=document.getElementById('phrase-list');
+function renderPhrases(cat){
+  phraseListEl.innerHTML='';
+  PHRASES[cat].forEach(p=>{
+    const text=typeof p==='string'?p:p.t;
+    const src=typeof p==='object'&&p.s?p.s:'';
+    const el=document.createElement('div');
+    el.className='phrase-item';
+    el.innerHTML=text+(src?'<span class="phrase-source">── '+src+'</span>':'');
+    el.addEventListener('click',()=>{
+      document.getElementById('in-msg').value=text;state.msg=text;draw();
+    });
+    phraseListEl.appendChild(el);
+  });
+}
+Object.keys(PHRASES).forEach((cat,i)=>{
+  const btn=document.createElement('div');btn.className='pcat-btn'+(i===0?' active':'');btn.textContent=cat;
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.pcat-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');renderPhrases(cat);
+  });
+  phraseCatsEl.appendChild(btn);
+});
+renderPhrases(Object.keys(PHRASES)[0]);
 
-function render() {
-  // gradient
-  document.getElementById('sStart').setAttribute('stop-color', G.gradStart);
-  document.getElementById('sEnd').setAttribute('stop-color',   G.gradEnd);
+// ── AI generation ──
+const aiGenBtn=document.getElementById('ai-gen-btn');
+const aiResult=document.getElementById('ai-result');
+const aiUseBtn=document.getElementById('ai-use-btn');
+let lastAiText='';
 
-  // base shape
-  var rect = document.getElementById('elRect');
-  var circ = document.getElementById('elCirc');
-  var useCirc = G.corner >= 45;
-  rect.style.display = (!useCirc && G.showCircle) ? '' : 'none';
-  circ.style.display = (useCirc  && G.showCircle) ? '' : 'none';
-  var base = useCirc ? circ : rect;
-  base.setAttribute('fill', G.circleColor);
-  if (!useCirc) {
-    base.setAttribute('rx', (G.corner * 0.28).toFixed(2));
-    base.setAttribute('ry', (G.corner * 0.28).toFixed(2));
+aiGenBtn.addEventListener('click', async()=>{
+  const occasion=document.getElementById('ai-occasion').value;
+  const style=document.getElementById('ai-style').value;
+  const extra=document.getElementById('ai-extra').value;
+
+  aiGenBtn.classList.add('loading');
+  aiGenBtn.innerHTML='<span class="spinner"></span> AI 思考中…';
+  aiResult.className='ai-result placeholder';
+  aiResult.textContent='正在生成中，請稍候…';
+  aiUseBtn.style.display='none';
+
+  const prompt='請為一張 LINE 早安問候圖片生成一段'+occasion+'的祝福語。風格要求：'+style+'。'+(extra?'補充需求：'+extra:'')+'\n要求：繁體中文，50字以內，適合圖片顯示，溫暖有質感，直接輸出祝福語，不要加引號或說明。';
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:200,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await resp.json();
+    const txt=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
+    if(txt){
+      lastAiText=txt;
+      aiResult.className='ai-result';
+      aiResult.textContent=txt;
+      aiUseBtn.style.display='block';
+    } else {
+      aiResult.textContent='⚠️ 生成失敗，請再試一次';
+    }
+  } catch(e){
+    aiResult.textContent='⚠️ 網路錯誤，請稍後再試';
   }
-  if (G.strokeW > 0) {
-    base.setAttribute('stroke', G.strokeColor);
-    base.setAttribute('stroke-width', G.strokeW);
+  aiGenBtn.classList.remove('loading');
+  aiGenBtn.innerHTML='<span class="btn-icon">✨</span> 重新生成';
+});
+
+aiUseBtn.addEventListener('click',()=>{
+  if(!lastAiText)return;
+  document.getElementById('in-msg').value=lastAiText;
+  state.msg=lastAiText;draw();
+  // jump to text step
+  document.querySelectorAll('.step-tab')[2].click();
+});
+
+// ── Fonts ──
+const fontEl=document.getElementById('font-options');
+FONTS.forEach((f,i)=>{
+  const btn=document.createElement('div');btn.className='font-btn'+(i===0?' active':'');
+  btn.innerHTML='<span style="font-family:'+f.stack+';font-size:1.4rem">'+f.sample+'</span><span class="fname">'+f.label+'</span>';
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');state.font=f;draw();
+  });
+  fontEl.appendChild(btn);
+});
+
+// ── Font size slider ──
+const fsSlider=document.getElementById('font-size-slider');
+const fsVal=document.getElementById('fs-val');
+fsSlider.addEventListener('input',()=>{
+  state.fontScale=+fsSlider.value/100;
+  fsVal.textContent=fsSlider.value+'%';draw();
+});
+
+// ── Colors ──
+const colorEl=document.getElementById('color-row');
+TEXT_COLORS.forEach((tc2,i)=>{
+  const sw=document.createElement('div');sw.className='color-swatch'+(i===0?' active':'');
+  sw.style.background=tc2.c;sw.style.boxShadow='0 0 0 1px rgba(255,255,255,0.12)';sw.title=tc2.l;
+  sw.addEventListener('click',()=>{
+    document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+    sw.classList.add('active');state.color=tc2.c;draw();
+  });
+  colorEl.appendChild(sw);
+});
+
+// ── Plate selector ──
+const PLATES=[
+  {id:'none',  label:'無背板', demo:{bg:'transparent',border:'1px dashed rgba(255,255,255,.25)',color:'rgba(255,255,255,.5)',text:'Aa'}},
+  {id:'dark',  label:'深色',   demo:{bg:'rgba(0,0,0,.55)',border:'none',color:'#fff',text:'Aa'}},
+  {id:'light', label:'淡色',   demo:{bg:'rgba(255,255,255,.7)',border:'none',color:'#333',text:'Aa'}},
+  {id:'gold',  label:'金框',   demo:{bg:'rgba(20,10,0,.6)',border:'2px solid #d4a843',color:'#f0cc70',text:'Aa'}},
+  {id:'frost', label:'霜白',   demo:{bg:'rgba(255,255,255,.25)',border:'1px solid rgba(255,255,255,.5)',color:'#fff',text:'Aa'}},
+];
+const plateEl=document.getElementById('plate-options');
+PLATES.forEach((p,i)=>{
+  const btn=document.createElement('div');
+  btn.className='plate-btn'+(p.id===state.plate?' active':'');
+  const demo=document.createElement('div');
+  demo.className='pb-demo';
+  demo.style.cssText='background:'+p.demo.bg+';border:'+p.demo.border+';color:'+p.demo.color+';';
+  demo.textContent=p.demo.text;
+  const lbl=document.createElement('div');lbl.className='pb-label';lbl.textContent=p.label;
+  btn.appendChild(demo);btn.appendChild(lbl);
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.plate-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');state.plate=p.id;draw();
+  });
+  plateEl.appendChild(btn);
+});
+
+// ── Direction ──
+document.querySelectorAll('.dir-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');state.dir=btn.dataset.dir;draw();
+  });
+});
+
+// ── Text inputs ──
+['title','msg','sign'].forEach(k=>{
+  document.getElementById('in-'+k).addEventListener('input',e=>{state[k]=e.target.value;draw();});
+});
+
+// ── Toggles ──
+document.getElementById('tog-shadow').addEventListener('change',e=>{state.shadow=e.target.checked;draw();});
+document.getElementById('tog-date').addEventListener('change',e=>{state.date=e.target.checked;draw();});
+
+// ── Elder mode ──
+const elderCheck=document.getElementById('elder-check');
+const elderLabel=document.getElementById('elder-label');
+elderCheck.addEventListener('change',()=>{
+  state.elder=elderCheck.checked;
+  document.body.classList.toggle('elder',state.elder);
+  elderLabel.textContent=state.elder?'開啟':'關閉';
+  // bump font scale
+  if(state.elder){ fsSlider.value=120;state.fontScale=1.2;fsVal.textContent='120%'; }
+  else{ fsSlider.value=100;state.fontScale=1.0;fsVal.textContent='100%'; }
+  draw();
+});
+
+// ── Step tabs ──
+document.querySelectorAll('.step-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    const s=+tab.dataset.step;
+    document.querySelectorAll('.step-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.step-pane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pane-'+s).classList.add('active');
+  });
+});
+
+// ═══════════════════════════════════════════
+//  DRAW ENGINE
+// ═══════════════════════════════════════════
+const canvas=document.getElementById('card-canvas');
+const ctx=canvas.getContext('2d');
+const CW=810,CH=1080;
+
+function draw(){
+  ctx.clearRect(0,0,CW,CH);
+  // 1. background
+  if(state.customBgImg){
+    const img=state.customBgImg;
+    const sc=Math.max(CW/img.width,CH/img.height);
+    const w=img.width*sc,h=img.height*sc;
+    ctx.drawImage(img,(CW-w)/2,(CH-h)/2,w,h);
+    // scrim
+    const scrim=ctx.createLinearGradient(0,0,0,CH);
+    scrim.addColorStop(0,'rgba(0,0,0,0.12)');scrim.addColorStop(.5,'rgba(0,0,0,0.22)');scrim.addColorStop(1,'rgba(0,0,0,0.5)');
+    ctx.fillStyle=scrim;ctx.fillRect(0,0,CW,CH);
   } else {
-    base.removeAttribute('stroke');
-    base.removeAttribute('stroke-width');
+    state.tpl.draw(ctx);
+    // overlay scrim
+    const scrim=ctx.createLinearGradient(0,0,0,CH);
+    scrim.addColorStop(0,'rgba(0,0,0,0.05)');scrim.addColorStop(.5,'rgba(0,0,0,0.18)');scrim.addColorStop(1,'rgba(0,0,0,0.45)');
+    ctx.fillStyle=scrim;ctx.fillRect(0,0,CW,CH);
   }
+  drawBorder();
+  if(state.dir==='v') drawTextVertical();
+  else drawTextHorizontal();
+}
 
-  // geo
-  var geo = document.getElementById('elGeo');
-  var d = geoPath(G.pts, G.ratio, G.rot, G.geoStyle);
-  geo.setAttribute('d', d);
-  geo.style.display = d ? '' : 'none';
+function drawBorder(){
+  const m=36;
+  ctx.save();
+  ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=2;ctx.strokeRect(m,m,CW-m*2,CH-m*2);
+  ctx.strokeStyle='rgba(255,255,255,0.07)';ctx.lineWidth=1;ctx.strokeRect(m+14,m+14,CW-m*2-28,CH-m*2-28);
+  [[m,m,false,false],[CW-m,m,true,false],[m,CH-m,false,true],[CW-m,CH-m,true,true]].forEach(([x,y,fx,fy])=>{
+    ctx.save();ctx.translate(x,y);ctx.scale(fx?-1:1,fy?-1:1);
+    ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(0,38);ctx.lineTo(0,0);ctx.lineTo(38,0);ctx.stroke();
+    ctx.restore();});
+  ctx.restore();
+}
 
-  // info pts
-  var infPts = document.getElementById('inf-pts');
-  if (G.geoStyle === 'none') infPts.textContent = '–';
-  else infPts.textContent = G.geoStyle==='star' ? G.pts*2 : G.pts;
+function setShadow(on){
+  if(on&&state.shadow){ctx.shadowColor='rgba(0,0,0,0.75)';ctx.shadowBlur=16;}
+  else{ctx.shadowColor='transparent';ctx.shadowBlur=0;}
+}
 
-  // slot
-  var slot = document.getElementById('elSlot');
-  slot.innerHTML = '';
-  if (G.coreType === 'icon') {
-    var sd = SHP[G.shape];
-    if (sd) {
-      var p = document.createElementNS(NS,'path');
-      p.setAttribute('d', sd.d);
-      p.setAttribute('fill', G.iconColor);
-      if (G.iconShadow) p.setAttribute('filter','url(#fShadow)');
-      var sc = G.iconSize;
-      var xo = 12*(1-sc) + sd.dx;
-      var yo = 12*(1-sc) + sd.dy + G.iconY;
-      p.setAttribute('transform','translate('+xo.toFixed(3)+','+yo.toFixed(3)+') scale('+sc+')');
-      slot.appendChild(p);
-    }
-  } else if (G.coreType === 'text') {
-    var t = document.createElementNS(NS,'text');
-    t.setAttribute('x','12'); t.setAttribute('y','12'); t.setAttribute('dy','0.38em');
-    t.setAttribute('text-anchor','middle'); t.setAttribute('font-weight','900');
-    // Auto-scale by char count: 1 char=full size, 2 chars≈71%, 3 chars≈55%
-    var len = G.txt.length || 1;
-    var autoSize = (G.fontSize / Math.pow(len, 0.52)).toFixed(2);
-    t.setAttribute('font-size', autoSize);
-    t.setAttribute('fill', G.txtColor);
-    t.textContent = G.txt;
-    slot.appendChild(t);
+function drawDivider(y){
+  ctx.save();ctx.shadowColor='transparent';ctx.shadowBlur=0;
+  ctx.strokeStyle=state.color;ctx.lineWidth=1.5;ctx.globalAlpha=0.45;
+  const lw=190;ctx.beginPath();ctx.moveTo(CW/2-lw,y);ctx.lineTo(CW/2+lw,y);ctx.stroke();
+  ctx.globalAlpha=0.8;ctx.fillStyle=state.color;
+  ctx.save();ctx.translate(CW/2,y);ctx.rotate(Math.PI/4);ctx.fillRect(-5,-5,10,10);ctx.restore();
+  ctx.restore();
+}
+
+function wrapText(c,txt,maxW){
+  const paras=txt.split(/\n/);const lines=[];
+  paras.forEach(para=>{
+    let cur='';
+    for(const ch of para){if(c.measureText(cur+ch).width>maxW&&cur){lines.push(cur);cur=ch;}else cur+=ch;}
+    if(cur)lines.push(cur);});
+  return lines;
+}
+
+function drawPlate(x,y,w,h,r){
+  if(state.plate==='none') return;
+  ctx.save();
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;
+  const pad=22;
+  const rx=x-w/2-pad, ry=y-h/2-pad*0.7, rw=w+pad*2, rh=h+pad*1.4;
+  // rounded rect helper
+  function rr(rx,ry,rw,rh,rad){
+    ctx.beginPath();
+    ctx.moveTo(rx+rad,ry);ctx.lineTo(rx+rw-rad,ry);ctx.arcTo(rx+rw,ry,rx+rw,ry+rad,rad);
+    ctx.lineTo(rx+rw,ry+rh-rad);ctx.arcTo(rx+rw,ry+rh,rx+rw-rad,ry+rh,rad);
+    ctx.lineTo(rx+rad,ry+rh);ctx.arcTo(rx,ry+rh,rx,ry+rh-rad,rad);
+    ctx.lineTo(rx,ry+rad);ctx.arcTo(rx,ry,rx+rad,ry,rad);
+    ctx.closePath();
   }
-
-  // shape grid icon color sync
-  document.querySelectorAll('#shapeGrid .sbtn svg path').forEach(function(p){
-    p.setAttribute('fill', G.iconColor);
-  });
-
-  renderSizes();
-}
-
-function renderSizes() {
-  var row = document.getElementById('szrow');
-  row.innerHTML = '';
-  [64,32,16].forEach(function(sz){
-    var cl = document.getElementById('svgMain').cloneNode(true);
-    cl.setAttribute('width',sz); cl.setAttribute('height',sz);
-    cl.removeAttribute('id');
-    cl.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id')});
-    var item = document.createElement('div');
-    item.className = 'szitem';
-    var lbl = document.createElement('div');
-    lbl.className = 'szlb'; lbl.textContent = sz+'px';
-    item.appendChild(cl); item.appendChild(lbl);
-    row.appendChild(item);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════
-function toast(msg) {
-  var el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(function(){ el.classList.remove('show'); }, 2200);
-}
-
-function exportSVG() {
-  var cl = document.getElementById('svgMain').cloneNode(true);
-  cl.setAttribute('width','512'); cl.setAttribute('height','512');
-  return cl.outerHTML;
-}
-
-// iOS-safe copy
-function copySVG() {
-  var s = exportSVG();
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(s).then(function(){ toast('✓ SVG 已複製'); }).catch(function(){ fallbackCopy(s); });
-  } else { fallbackCopy(s); }
-}
-function fallbackCopy(s) {
-  var ta = document.createElement('textarea');
-  ta.value = s; ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
-  document.body.appendChild(ta); ta.focus(); ta.select();
-  try { document.execCommand('copy'); toast('✓ SVG 已複製'); } catch(e){ toast('⚠ 請手動複製'); }
-  document.body.removeChild(ta);
-}
-
-// iOS-safe download
-function dlSVG() {
-  var s = exportSVG();
-  var b64 = btoa(unescape(encodeURIComponent(s)));
-  var a = document.createElement('a');
-  a.href = 'data:image/svg+xml;base64,'+b64;
-  a.download = 'icon-512.svg';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  toast('✓ icon-512.svg 下載中');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// INIT — runs after DOM ready
-// ═══════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', function() {
-
-  // ── Shape grid ───────────────────────────────────────────────
-  var grid = document.getElementById('shapeGrid');
-  Object.keys(SHP).forEach(function(key) {
-    var sh = SHP[key];
-    var btn = document.createElement('div');
-    btn.className = 'sbtn' + (key===G.shape ? ' on' : '');
-    btn.innerHTML =
-      '<svg viewBox="0 0 24 24" fill="'+G.iconColor+'" xmlns="http://www.w3.org/2000/svg"><path d="'+sh.d+'"/></svg>'+
-      '<div class="slbl">'+sh.lbl+'</div>';
-    btn.addEventListener('pointerup', function(e){
-      e.preventDefault();
-      document.querySelectorAll('#shapeGrid .sbtn').forEach(function(b){ b.classList.remove('on'); });
-      btn.classList.add('on');
-      G.shape = key;
-      render();
-    });
-    grid.appendChild(btn);
-  });
-
-  // ── Pill rows ────────────────────────────────────────────────
-  function initPills(rowId, stateKey, cb) {
-    var row = document.getElementById(rowId);
-    row.addEventListener('pointerup', function(e) {
-      var el = e.target;
-      // walk up to find .pil
-      while (el && el !== row) {
-        if (el.classList && el.classList.contains('pil')) {
-          e.preventDefault();
-          row.querySelectorAll('.pil').forEach(function(p){ p.classList.remove('on'); });
-          el.classList.add('on');
-          G[stateKey] = el.getAttribute('data-v');
-          if (cb) cb(G[stateKey]);
-          render();
-          return;
-        }
-        el = el.parentElement;
-      }
-    });
+  const rad=r||18;
+  if(state.plate==='dark'){
+    ctx.fillStyle='rgba(0,0,0,0.55)';rr(rx,ry,rw,rh,rad);ctx.fill();
+  } else if(state.plate==='light'){
+    ctx.fillStyle='rgba(255,255,255,0.72)';rr(rx,ry,rw,rh,rad);ctx.fill();
+  } else if(state.plate==='gold'){
+    ctx.fillStyle='rgba(20,10,0,0.62)';rr(rx,ry,rw,rh,rad);ctx.fill();
+    ctx.strokeStyle='rgba(212,168,67,0.85)';ctx.lineWidth=2.5;rr(rx+2,ry+2,rw-4,rh-4,rad-2);ctx.stroke();
+    // inner thin line
+    ctx.strokeStyle='rgba(240,204,112,0.4)';ctx.lineWidth=1;rr(rx+7,ry+7,rw-14,rh-14,rad-5);ctx.stroke();
+  } else if(state.plate==='frost'){
+    ctx.fillStyle='rgba(255,255,255,0.22)';rr(rx,ry,rw,rh,rad);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1.5;rr(rx,ry,rw,rh,rad);ctx.stroke();
   }
+  ctx.restore();
+}
 
-  initPills('pills-geoStyle', 'geoStyle');
-  initPills('pills-coreType', 'coreType', function(v){
-    document.getElementById('box-icon').style.display = v==='icon' ? 'block' : 'none';
-    document.getElementById('box-text').style.display = v==='text' ? 'block' : 'none';
-  });
+function drawTextHorizontal(){
+  const col=state.color;const sc=state.fontScale;
+  const title=state.title||'早安';
+  const msg=state.msg||'願你今天充滿陽光\n笑口常開，萬事順心！';
 
-  // bg pills
-  var bgrow = document.getElementById('bgrow');
-  bgrow.addEventListener('pointerup', function(e){
-    var el = e.target;
-    while (el && el !== bgrow) {
-      if (el.classList && el.classList.contains('bgpil')) {
-        e.preventDefault();
-        bgrow.querySelectorAll('.bgpil').forEach(function(p){ p.classList.remove('on'); });
-        el.classList.add('on');
-        document.getElementById('stage').className = 'stage ' + el.getAttribute('data-v');
-        return;
-      }
-      el = el.parentElement;
-    }
-  });
+  ctx.textAlign='center';ctx.textBaseline='middle';
 
-  // ── Toggles ──────────────────────────────────────────────────
-  function initToggle(rowId, stateKey) {
-    var row = document.getElementById(rowId);
-    var dot = row.querySelector('.togl');
-    row.addEventListener('pointerup', function(e){
-      e.preventDefault();
-      G[stateKey] = !G[stateKey];
-      dot.classList.toggle('on', G[stateKey]);
-      render();
-    });
+  // measure title width for plate
+  ctx.font='bold '+Math.round(108*sc)+'px '+state.font.stack;
+  const titleW=ctx.measureText(title).width;
+  const titleH=Math.round(108*sc);
+
+  // measure msg lines for plate
+  ctx.font='400 '+Math.round(50*sc)+'px '+state.font.stack;
+  const lines=wrapText(ctx,msg,CW-160);
+  const lh=Math.round(70*sc),totalH=lines.length*lh;
+  const msgMaxW=lines.reduce((m,l)=>Math.max(m,ctx.measureText(l).width),0);
+  const sy=CH*.5-totalH/2+lh/2;
+
+  // ── draw title plate ──
+  drawPlate(CW/2, CH*0.22, titleW, titleH, 18);
+
+  // title text
+  setShadow(state.plate==='none');
+  ctx.font='bold '+Math.round(108*sc)+'px '+state.font.stack;
+  ctx.fillStyle=col;ctx.fillText(title,CW/2,CH*0.22);
+
+  drawDivider(CH*0.34);
+
+  // ── draw msg plate ──
+  drawPlate(CW/2, sy+(totalH-lh)/2, msgMaxW, totalH, 16);
+
+  // msg text
+  setShadow(state.plate==='none');
+  ctx.font='400 '+Math.round(50*sc)+'px '+state.font.stack;
+  ctx.fillStyle=col;
+  lines.forEach((l,i)=>ctx.fillText(l,CW/2,sy+i*lh));
+
+  drawDivider(CH*0.68);
+
+  if(state.date){
+    const now=new Date();
+    const ds=now.getFullYear()+' 年 '+(now.getMonth()+1)+' 月 '+now.getDate()+' 日';
+    ctx.font='300 '+Math.round(30*sc)+'px '+state.font.stack;
+    const dw=ctx.measureText(ds).width;
+    drawPlate(CW/2,CH*0.77,dw,Math.round(30*sc),12);
+    ctx.fillStyle=col;ctx.globalAlpha=0.85;setShadow(false);
+    ctx.fillText(ds,CW/2,CH*0.77);ctx.globalAlpha=1;
   }
-  initToggle('tog-showCircle', 'showCircle');
-  initToggle('tog-iconShadow', 'iconShadow');
-
-  // ── Color pickers ────────────────────────────────────────────
-  function initColor(colorId, stateKey) {
-    var inp = document.getElementById(colorId);
-    var wrap = document.getElementById('wrap-'+colorId);
-    var swch = wrap ? wrap.querySelector('.swch') : null;
-    var hex  = document.getElementById('hex-'+colorId);
-    inp.addEventListener('input', function(){
-      G[stateKey] = inp.value;
-      if (swch) swch.style.background = inp.value;
-      if (hex)  hex.textContent = inp.value.toUpperCase();
-      render();
-    });
-    if (wrap) {
-      wrap.addEventListener('pointerup', function(e){
-        if (e.target === inp) return;
-        e.preventDefault();
-        inp.click();
-      });
-    }
+  if(state.sign){
+    const signTxt='— '+state.sign+' —';
+    ctx.font='300 '+Math.round(34*sc)+'px '+state.font.stack;
+    const sw2=ctx.measureText(signTxt).width;
+    const sy2=state.date?CH*0.86:CH*0.82;
+    drawPlate(CW/2,sy2,sw2,Math.round(34*sc),12);
+    setShadow(false);ctx.fillStyle=col;ctx.globalAlpha=0.9;
+    ctx.fillText(signTxt,CW/2,sy2);ctx.globalAlpha=1;
   }
-  initColor('circleColor', 'circleColor');
-  initColor('strokeColor', 'strokeColor');
-  initColor('gradStart',   'gradStart');
-  initColor('gradEnd',     'gradEnd');
-  initColor('iconColor',   'iconColor');
-  initColor('textColor',   'txtColor');
+  setShadow(false);
+}
 
-  // ── Ranges ───────────────────────────────────────────────────
-  function initRange(rangeId, labelId, stateKey, parse, fmt) {
-    var inp = document.getElementById(rangeId);
-    var lbl = document.getElementById(labelId);
-    function upd() {
-      var v = parse(inp.value);
-      G[stateKey] = v;
-      lbl.textContent = fmt ? fmt(v) : v;
-      render();
-    }
-    inp.addEventListener('input',  upd);
-    inp.addEventListener('change', upd); // iOS fires change on thumb release
+function drawTextVertical(){
+  const col=state.color;const sc=state.fontScale;
+  const title=state.title||'早安';
+  const msg=state.msg||'願你今天充滿陽光笑口常開萬事順心';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+
+  // pre-measure title plate (vertical column)
+  ctx.font='bold '+Math.round(92*sc)+'px '+state.font.stack;
+  const tCharH=Math.round(102*sc);
+  const tTotalH=title.length*tCharH;
+  const tTx=CW*.78;
+  drawPlate(tTx, CH*.14+(tTotalH/2)-tCharH/2, Math.round(92*sc), tTotalH, 16);
+
+  // title chars
+  setShadow(state.plate==='none');
+  let ty=CH*.14;
+  for(const ch of title){ctx.fillStyle=col;ctx.fillText(ch,tTx,ty);ty+=tCharH;}
+
+  // msg column plate
+  ctx.font='400 '+Math.round(52*sc)+'px '+state.font.stack;
+  const clean=msg.replace(/\n/g,'');
+  const colStep=Math.round(58*sc);
+  const maxPerCol=Math.floor((CH*.68)/colStep);
+  const numCols=Math.ceil(clean.length/maxPerCol);
+  const msgBlockW=numCols*colStep;
+  const msgBlockH=Math.min(clean.length,maxPerCol)*colStep;
+  const msgCx=CW*.58-(numCols-1)*colStep/2;
+  drawPlate(msgCx,CH*.14+msgBlockH/2-colStep/2, msgBlockW, msgBlockH, 14);
+
+  setShadow(state.plate==='none');
+  let cx2=CW*.58,cy=CH*.14;
+  for(let i=0;i<clean.length;i++){
+    if(i>0&&i%maxPerCol===0){cx2-=Math.round(58*sc);cy=CH*.14;}
+    ctx.fillStyle=col;ctx.fillText(clean[i],cx2,cy);cy+=colStep;}
+
+  drawDivider(CH*.87);
+  if(state.date){
+    const now=new Date();
+    const ds=now.getFullYear()+'.'+(now.getMonth()+1)+'.'+now.getDate();
+    ctx.font='300 '+Math.round(28*sc)+'px '+state.font.stack;
+    const dw=ctx.measureText(ds).width;
+    drawPlate(CW/2,CH*.92,dw,Math.round(28*sc),10);
+    ctx.fillStyle=col;ctx.globalAlpha=.8;setShadow(false);
+    ctx.fillText(ds,CW/2,CH*.92);ctx.globalAlpha=1;
   }
-  var toInt   = function(v){ return v|0; };
-  var toFloat = function(v){ return parseFloat(v); };
-  var f1  = function(v){ return v.toFixed(1); };
-  var f2  = function(v){ return v.toFixed(2); };
+  setShadow(false);
+}
 
-  initRange('r-corner', 'v-corner', 'corner',    toInt,   null);
-  initRange('r-stroke', 'v-stroke', 'strokeW',   toFloat, f1);
-  initRange('r-pts',    'v-pts',    'pts',        toInt,   null);
-  initRange('r-ratio',  'v-ratio',  'ratio',      toFloat, f2);
-  initRange('r-rot',    'v-rot',    'rot',        toInt,   null);
-  initRange('r-isize',  'v-isize',  'iconSize',   toFloat, f2);
-  initRange('r-iy',     'v-iy',     'iconY',      toFloat, f1);
-  initRange('r-fs',     'v-fs',     'fontSize',   toFloat, null);
+// ── Save ──
+document.getElementById('save-btn').addEventListener('click',()=>{
+  const tmp=document.createElement('canvas');tmp.width=810;tmp.height=1080;
+  tmp.getContext('2d').drawImage(canvas,0,0);
+  const a=document.createElement('a');
+  a.href=tmp.toDataURL('image/jpeg',0.88);
+  a.download='早安卡片.jpg';a.click();
+});
 
-  // ── Text input ───────────────────────────────────────────────
-  document.getElementById('innerText').addEventListener('input', function(e){
-    G.txt = e.target.value;
-    render();
-  });
-
-  // ── Buttons ──────────────────────────────────────────────────
-  document.getElementById('btn-copy').addEventListener('pointerup', function(e){
-    e.preventDefault(); copySVG();
-  });
-  document.getElementById('btn-dl').addEventListener('pointerup', function(e){
-    e.preventDefault(); dlSVG();
-  });
-
-  // ── Initial render ───────────────────────────────────────────
-  render();
-
-}); // end DOMContentLoaded
+// Wait for fonts before first draw
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(function(){ draw(); }).catch(function(){ draw(); });
+} else {
+  setTimeout(draw, 300);
+}
 </script>
 
 
