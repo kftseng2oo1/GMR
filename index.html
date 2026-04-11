@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="zh-TW"><head><!-- PWA Meta — auto-injected by PWA 打包神器 -->
+<html lang="zh-TW">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>早安卡片 · 產生器</title>
@@ -377,14 +378,7 @@ input[type=range]::-webkit-slider-thumb{
 /* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 </style>
-<meta name="application-name" content="good morning"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="good morning"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(r => console.log('[SW] registered:', r.scope))
-        .catch(e => console.warn('[SW] registration failed:', e));
-    });
-  }</script></head>
+</head>
 <body>
 
 <header>
@@ -426,7 +420,14 @@ input[type=range]::-webkit-slider-thumb{
     <div class="panel-section">
       <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span>📷 我的圖庫</span>
-        <span id="upload-count" style="font-size:.6rem;color:var(--muted)">0 張</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="upload-count" style="font-size:.6rem;color:var(--muted)">0 張</span>
+          <button id="clear-gallery-btn" style="
+            font-size:.55rem;padding:3px 8px;border-radius:6px;
+            background:rgba(192,57,43,.18);border:1px solid rgba(192,57,43,.35);
+            color:#e74c3c;cursor:pointer;display:none;letter-spacing:.06em;
+          ">清除全部</button>
+        </div>
       </div>
       <!-- 圖庫橫向滾動列 -->
       <div class="tpl-scroll" id="user-gallery" style="min-height:107px;align-items:center">
@@ -435,7 +436,7 @@ input[type=range]::-webkit-slider-thumb{
           <span class="upload-icon">➕</span>
           <span style="font-size:.58rem;color:var(--gold);letter-spacing:.06em">新增圖片</span>
         </div>
-        <input type="file" id="bg-upload" accept="image/*" multiple="" style="display:none">
+        <input type="file" id="bg-upload" accept="image/*" multiple style="display:none">
       </div>
       <!-- 拖曳區 -->
       <div id="upload-zone" style="
@@ -547,11 +548,11 @@ input[type=range]::-webkit-slider-thumb{
       <div class="sec-title">💡 其他設定</div>
       <div class="toggle-row">
         <span>文字陰影（複雜背景建議開啟）</span>
-        <label class="toggle"><input type="checkbox" id="tog-shadow" checked=""><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-shadow" checked><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>顯示今日日期</span>
-        <label class="toggle"><input type="checkbox" id="tog-date" checked=""><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-date" checked><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>外框線</span>
@@ -615,7 +616,7 @@ input[type=range]::-webkit-slider-thumb{
 </div>
 <div class="em-btns" id="em-btns" style="display:none">
   <div class="em-bmax">
-    <button class="em-btn" id="em-analyze-btn" disabled="">🔍 AI 分析圖片文字</button>
+    <button class="em-btn" id="em-analyze-btn" disabled>🔍 AI 分析圖片文字</button>
     <button class="em-btn" id="em-erase-btn">✨ 開始清除文字</button>
     <button class="em-btn" id="em-apply-btn">✅ 套用並使用此圖</button>
   </div>
@@ -623,11 +624,29 @@ input[type=range]::-webkit-slider-thumb{
 
 <script>
 window.onerror=function(msg,src,line,col,err){
+  // line:0 = cross-origin sandbox error (localStorage, external resource)
+  // 完全吃掉，不讓 iOS WebView 顯示 Uncaught Error
+  if(!line || line===0 || msg==='Script error.' || msg==='Script error'){
+    return true;
+  }
   console.log('Card error:',msg,'line:',line);
   return true;
 };
-// ═══════════════════════════════════════════
-//  TEMPLATES (Canvas-drawn backgrounds)
+// 攔截 unhandledrejection（Promise 錯誤）
+window.addEventListener('unhandledrejection',function(e){
+  e.preventDefault();
+  return true;
+});
+
+// ── 全域安全執行包裝 ──
+(function(){
+'use strict';
+try{
+
+// ── API PROXY (Cloudflare Worker) ──
+const PROXY = 'https://arcar.kftseng2oo1.workers.dev';
+
+
 // ═══════════════════════════════════════════
 const TEMPLATES = [
   { id:'sunrise', label:'旭日東昇', draw(c){
@@ -866,9 +885,87 @@ const userGallery = document.getElementById('user-gallery');
 const uploadZone  = document.getElementById('upload-zone');
 const uploadCount = document.getElementById('upload-count');
 
-// 圖庫陣列：{img, dataUrl, thumbCanvas}
+// 圖庫陣列：{img, dataUrl}
 const userImages = [];
-let activeUserIdx = -1;  // 目前選中的圖庫項目 index
+let activeUserIdx = -1;
+
+// ── localStorage 圖庫儲存 ──
+const LS_KEY = 'morningCard_gallery_v1';
+
+// 先檢測 localStorage 是否可用（完全隔離，防止 iOS WebView 跨域錯誤）
+var LS_OK = false;
+(function(){
+  var _w = window;
+  // 在 iframe 沙盒裡 localStorage 會丟 SecurityError，必須用 iframe 隔離法偵測
+  try{
+    var _ls = _w.localStorage;
+    if(_ls && typeof _ls.setItem === 'function'){
+      _ls.setItem('__mc_test__','1');
+      _ls.removeItem('__mc_test__');
+      LS_OK = true;
+    }
+  }catch(_e){ LS_OK = false; }
+})();
+
+function saveGalleryToLS(){
+  if(!LS_OK) return;
+  try{
+    const toSave = userImages.map(function(item){
+      // 壓縮：長邊不超過 900px，JPEG 0.78
+      var tc=document.createElement('canvas');
+      var MAX=900;
+      var sc=Math.min(1,MAX/Math.max(item.img.width||1,item.img.height||1));
+      tc.width=Math.round((item.img.width||1)*sc);
+      tc.height=Math.round((item.img.height||1)*sc);
+      tc.getContext('2d').drawImage(item.img,0,0,tc.width,tc.height);
+      return tc.toDataURL('image/jpeg',0.78);
+    });
+    var json=JSON.stringify(toSave);
+    // 超過 4MB 就只存最後 3 張，避免 quota 錯誤
+    if(json.length>4000000){
+      var trimmed=toSave.slice(-3);
+      json=JSON.stringify(trimmed);
+    }
+    localStorage.setItem(LS_KEY, json);
+  }catch(e){
+    console.log('LS save fail:',e.message);
+  }
+}
+
+function loadGalleryFromLS(){
+  if(!LS_OK) return;
+  var raw;
+  try{ raw=localStorage.getItem(LS_KEY); }
+  catch(e){ console.log('LS read fail'); return; }
+  if(!raw) return;
+  var urls;
+  try{ urls=JSON.parse(raw); }
+  catch(e){ console.log('LS parse fail'); return; }
+  if(!urls||!urls.length) return;
+  var total=urls.length;
+  var loaded=0;
+  urls.forEach(function(dataUrl){
+    if(typeof dataUrl!=='string'||dataUrl.indexOf('data:image')!==0){ total--; return; }
+    var img=new Image();
+    img.onload=function(){
+      userImages.push({img:img,dataUrl:dataUrl});
+      loaded++;
+      if(loaded>=total){
+        renderGallery();
+        updateCountLabel();
+        if(userImages.length>0) selectUserImage(0);
+      }
+    };
+    img.onerror=function(){
+      total--;
+      if(loaded>=total&&loaded>0){
+        renderGallery(); updateCountLabel();
+        if(userImages.length>0) selectUserImage(0);
+      }
+    };
+    try{ img.src=dataUrl; }catch(e){ total--; }
+  });
+}
 
 function updateCountLabel(){
   uploadCount.textContent = userImages.length + ' 張';
@@ -887,20 +984,20 @@ function selectUserImage(idx){
 
 function deleteUserImage(idx){
   userImages.splice(idx,1);
-  // re-render gallery
   renderGallery();
   if(userImages.length===0){
-    // fall back to first template
     state.customBgImg=null;
     activeUserIdx=-1;
     document.querySelectorAll('.tpl-card').forEach((c,i)=>{if(i===0)c.classList.add('active');});
     state.tpl=TEMPLATES[0];
+    showEraseTrigger(false);
   } else {
     const newIdx=Math.min(idx, userImages.length-1);
     selectUserImage(newIdx);
   }
   draw();
   updateCountLabel();
+  saveGalleryToLS();
 }
 
 function renderGallery(){
@@ -957,6 +1054,7 @@ function loadFiles(files){
           renderGallery();
           updateCountLabel();
           selectUserImage(userImages.length-1);
+          saveGalleryToLS();  // 儲存到 localStorage
         }
       };
       img.src=e.target.result;
@@ -1076,7 +1174,7 @@ emAnalyzeBtn.addEventListener('click', async()=>{
 
   try{
     emAddLog('🤖 AI 辨識中…','linf');
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch(PROXY,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -1181,6 +1279,7 @@ emApplyBtn.addEventListener('click',()=>{
     userImages[emWorkIdx].dataUrl=wc.toDataURL('image/jpeg',0.92);
     renderGallery();
     selectUserImage(emWorkIdx);
+    saveGalleryToLS();   // 儲存清除後的圖片
     closeEraser();
     emAddLog('✅ 已套用到圖庫','lok');
   };
@@ -1283,7 +1382,7 @@ aiGenBtn.addEventListener('click', async()=>{
   const prompt='請為一張 LINE 早安問候圖片生成一段'+occasion+'的祝福語。風格要求：'+style+'。'+(extra?'補充需求：'+extra:'')+'\n要求：繁體中文，50字以內，適合圖片顯示，溫暖有質感，直接輸出祝福語，不要加引號或說明。';
 
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch(PROXY,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -1628,16 +1727,40 @@ function drawTextVertical(){
 }
 
 // ── Save ──
-document.getElementById('save-btn').addEventListener('click',()=>{
-  const tmp=document.createElement('canvas');tmp.width=810;tmp.height=1080;
+document.getElementById('save-btn').addEventListener('click',function(){
+  var tmp=document.createElement('canvas');tmp.width=810;tmp.height=1080;
   tmp.getContext('2d').drawImage(canvas,0,0);
-  const a=document.createElement('a');
+  var a=document.createElement('a');
   a.href=tmp.toDataURL('image/jpeg',0.88);
   a.download='早安卡片.jpg';a.click();
 });
 
+// ── 清除全部圖庫 ──
+document.getElementById('clear-gallery-btn').addEventListener('click',function(){
+  if(!userImages.length)return;
+  userImages.length=0;
+  activeUserIdx=-1;
+  renderGallery();
+  updateCountLabel();
+  state.customBgImg=null;
+  document.querySelectorAll('.tpl-card').forEach(function(c,i){if(i===0)c.classList.add('active');});
+  state.tpl=TEMPLATES[0];
+  showEraseTrigger(false);
+  try{ if(LS_OK) localStorage.removeItem(LS_KEY); }catch(e){}
+  draw();
+});
+
+// ── 啟動：從 localStorage 還原圖庫（延遲確保 DOM 就緒）──
+setTimeout(function(){
+  try{ loadGalleryFromLS(); }catch(e){ console.log('init ls err:',e.message); }
+},150);
+
 draw();
+
+}catch(_globalErr){
+  console.log('global catch:',_globalErr&&_globalErr.message);
+}
+})();
 </script>
-
-
-</body></html>
+</body>
+</html>
