@@ -307,11 +307,49 @@ input[type=range]::-webkit-slider-thumb{
 /* preview inside modal */
 .em-preview{position:relative;border-radius:8px;overflow:hidden;background:#000;margin-bottom:10px;}
 #em-canvas{display:block;width:100%;max-height:45vh;object-fit:contain;}
-.em-overlay{position:absolute;inset:0;pointer-events:none;}
+.em-overlay{position:absolute;inset:0;pointer-events:all;}
 .em-box{
   position:absolute;border:2px solid #00d4ff;
-  background:rgba(0,212,255,.15);border-radius:3px;
+  background:rgba(0,212,255,.12);border-radius:3px;
+  cursor:move;touch-action:none;box-sizing:border-box;
 }
+.em-box:hover{ background:rgba(0,212,255,.22); }
+.em-box .em-box-label{
+  position:absolute;top:-18px;left:0;
+  font-size:.55rem;color:#00d4ff;background:rgba(0,0,0,.7);
+  padding:1px 5px;border-radius:3px;white-space:nowrap;pointer-events:none;
+}
+.em-box .em-box-del{
+  position:absolute;top:-10px;right:-10px;
+  width:20px;height:20px;border-radius:50%;
+  background:#e74c3c;border:none;color:#fff;
+  font-size:.6rem;cursor:pointer;line-height:20px;text-align:center;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+/* 8 resize handles */
+.em-handle{
+  position:absolute;width:14px;height:14px;border-radius:3px;
+  background:#00d4ff;border:2px solid #fff;box-sizing:border-box;
+  touch-action:none;z-index:10;
+}
+.em-handle[data-d="nw"]{top:-7px;left:-7px;cursor:nw-resize;}
+.em-handle[data-d="n"] {top:-7px;left:calc(50% - 7px);cursor:n-resize;}
+.em-handle[data-d="ne"]{top:-7px;right:-7px;cursor:ne-resize;}
+.em-handle[data-d="e"] {top:calc(50% - 7px);right:-7px;cursor:e-resize;}
+.em-handle[data-d="se"]{bottom:-7px;right:-7px;cursor:se-resize;}
+.em-handle[data-d="s"] {bottom:-7px;left:calc(50% - 7px);cursor:s-resize;}
+.em-handle[data-d="sw"]{bottom:-7px;left:-7px;cursor:sw-resize;}
+.em-handle[data-d="w"] {top:calc(50% - 7px);left:-7px;cursor:w-resize;}
+/* add region btn */
+.em-add-region{
+  width:100%;padding:8px;border-radius:7px;margin-top:8px;
+  background:rgba(0,212,255,.1);border:1px dashed rgba(0,212,255,.4);
+  color:#00d4ff;font-size:.68rem;letter-spacing:.1em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.em-add-region:active{background:rgba(0,212,255,.2);}
+.em-hint{font-size:.58rem;color:rgba(255,255,255,.3);text-align:center;margin-top:4px;letter-spacing:.06em;}
 /* status */
 .em-status{
   display:flex;align-items:center;gap:8px;padding:8px 0;
@@ -596,6 +634,8 @@ input[type=range]::-webkit-slider-thumb{
     </div>
     <div class="em-body">
       <div class="em-regions" id="em-region-list"></div>
+      <button class="em-add-region" id="em-add-region-btn">＋ 手動新增區域</button>
+      <div class="em-hint">框框可拖移位置・拉角落控點調整大小</div>
       <div class="em-algo-row" id="em-algo-row">
         <div class="em-algo-btn active" data-algo="inpaint"><span class="em-algo-icon">🎨</span>周圍取色</div>
         <div class="em-algo-btn" data-algo="blur"><span class="em-algo-icon">🌫️</span>高斯模糊</div>
@@ -1215,14 +1255,11 @@ function renderEmRegions(){
   const rlist=document.getElementById('em-region-list');
   rlist.innerHTML='';
   document.getElementById('em-region-count').textContent=emRegions.length+' 處';
-  emRegions.forEach((r,i)=>{
-    // box on canvas
-    const box=document.createElement('div');
-    box.className='em-box';
-    box.style.left=(r.x*100)+'%';box.style.top=(r.y*100)+'%';
-    box.style.width=(r.w*100)+'%';box.style.height=(r.h*100)+'%';
-    emOverlay.appendChild(box);
-    // list
+
+  emRegions.forEach(function(r,i){
+    makeInteractiveBox(r, i);
+
+    // list item
     const item=document.createElement('div');
     item.className='em-region-item';
     item.innerHTML='<span style="color:#00d4ff;font-size:.62rem;flex-shrink:0">'+(i+1)+'</span>'+
@@ -1230,14 +1267,145 @@ function renderEmRegions(){
       '<div class="eri-del" data-i="'+i+'">✕</div>';
     rlist.appendChild(item);
   });
-  rlist.querySelectorAll('.eri-del').forEach(d=>{
-    d.addEventListener('click',()=>{
+
+  rlist.querySelectorAll('.eri-del').forEach(function(d){
+    d.addEventListener('click',function(){
       emRegions.splice(+d.dataset.i,1);
       renderEmRegions();
       if(!emRegions.length) emEraseBtn.style.display='none';
     });
   });
 }
+
+function makeInteractiveBox(r, idx){
+  const overlay = emOverlay;
+  const box = document.createElement('div');
+  box.className='em-box';
+  box.style.left=(r.x*100)+'%';
+  box.style.top=(r.y*100)+'%';
+  box.style.width=(r.w*100)+'%';
+  box.style.height=(r.h*100)+'%';
+
+  // label
+  const lbl=document.createElement('div');
+  lbl.className='em-box-label';
+  lbl.textContent=(idx+1)+' '+(r.text||'').slice(0,10);
+  box.appendChild(lbl);
+
+  // delete btn
+  const del=document.createElement('button');
+  del.className='em-box-del';del.textContent='✕';
+  del.addEventListener('click',function(e){
+    e.stopPropagation();
+    emRegions.splice(idx,1);
+    renderEmRegions();
+    if(!emRegions.length) emEraseBtn.style.display='none';
+  });
+  box.appendChild(del);
+
+  // 8 resize handles
+  ['nw','n','ne','e','se','s','sw','w'].forEach(function(d){
+    const h=document.createElement('div');
+    h.className='em-handle';h.dataset.d=d;
+    box.appendChild(h);
+    addResizeEvents(h, box, r, d);
+  });
+
+  overlay.appendChild(box);
+
+  // drag to move
+  addMoveEvents(box, r);
+}
+
+// ── pointer event helpers ──
+function getOverlayRect(){ return emOverlay.getBoundingClientRect(); }
+
+function clamp(v,min,max){ return Math.min(max,Math.max(min,v)); }
+
+function addMoveEvents(box, r){
+  var startX,startY,startRx,startRy,dragging=false;
+
+  function onStart(e){
+    if(e.target.classList.contains('em-handle')||e.target.classList.contains('em-box-del'))return;
+    e.preventDefault();
+    dragging=true;
+    var pt=e.touches?e.touches[0]:e;
+    startX=pt.clientX;startY=pt.clientY;
+    startRx=r.x;startRy=r.y;
+    document.addEventListener('mousemove',onMove);document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('mouseup',onEnd);document.addEventListener('touchend',onEnd);
+  }
+  function onMove(e){
+    if(!dragging)return;
+    e.preventDefault();
+    var pt=e.touches?e.touches[0]:e;
+    var rect=getOverlayRect();
+    var dx=(pt.clientX-startX)/rect.width;
+    var dy=(pt.clientY-startY)/rect.height;
+    r.x=clamp(startRx+dx,0,1-r.w);
+    r.y=clamp(startRy+dy,0,1-r.h);
+    box.style.left=(r.x*100)+'%';
+    box.style.top=(r.y*100)+'%';
+  }
+  function onEnd(){
+    dragging=false;
+    document.removeEventListener('mousemove',onMove);document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('mouseup',onEnd);document.removeEventListener('touchend',onEnd);
+  }
+  box.addEventListener('mousedown',onStart);
+  box.addEventListener('touchstart',onStart,{passive:false});
+}
+
+function addResizeEvents(handle, box, r, dir){
+  var startX,startY,startR={};
+
+  function onStart(e){
+    e.preventDefault();e.stopPropagation();
+    var pt=e.touches?e.touches[0]:e;
+    startX=pt.clientX;startY=pt.clientY;
+    startR={x:r.x,y:r.y,w:r.w,h:r.h};
+    document.addEventListener('mousemove',onMove);document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('mouseup',onEnd);document.addEventListener('touchend',onEnd);
+  }
+  function onMove(e){
+    e.preventDefault();
+    var pt=e.touches?e.touches[0]:e;
+    var rect=getOverlayRect();
+    var dx=(pt.clientX-startX)/rect.width;
+    var dy=(pt.clientY-startY)/rect.height;
+    var MIN=0.03;
+    var nx=startR.x,ny=startR.y,nw=startR.w,nh=startR.h;
+
+    if(dir.indexOf('e')>=0){ nw=clamp(startR.w+dx,MIN,1-startR.x); }
+    if(dir.indexOf('s')>=0){ nh=clamp(startR.h+dy,MIN,1-startR.y); }
+    if(dir.indexOf('w')>=0){
+      var newX=clamp(startR.x+dx,0,startR.x+startR.w-MIN);
+      nw=startR.x+startR.w-newX;nx=newX;
+    }
+    if(dir.indexOf('n')>=0){
+      var newY=clamp(startR.y+dy,0,startR.y+startR.h-MIN);
+      nh=startR.y+startR.h-newY;ny=newY;
+    }
+    r.x=nx;r.y=ny;r.w=nw;r.h=nh;
+    box.style.left=(nx*100)+'%';box.style.top=(ny*100)+'%';
+    box.style.width=(nw*100)+'%';box.style.height=(nh*100)+'%';
+  }
+  function onEnd(){
+    document.removeEventListener('mousemove',onMove);document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('mouseup',onEnd);document.removeEventListener('touchend',onEnd);
+  }
+  handle.addEventListener('mousedown',onStart);
+  handle.addEventListener('touchstart',onStart,{passive:false});
+}
+
+// ── 手動新增區域 ──
+document.getElementById('em-add-region-btn').addEventListener('click',function(){
+  // 新增在中央偏上，預設 40% 寬 10% 高
+  emRegions.push({text:'手動區域',x:0.3,y:0.3,w:0.4,h:0.1});
+  renderEmRegions();
+  emEraseBtn.style.display='flex';
+  document.getElementById('em-regions-card').style.display='block';
+});
 
 // ── Erase ──
 emEraseBtn.addEventListener('click',()=>{
