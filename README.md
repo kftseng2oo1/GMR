@@ -1,4 +1,4 @@
-# good morning
+# GOOD MORNING
 
 > 一個 Progressive Web App
 
@@ -18,7 +18,7 @@
 ```bash
 git init
 git add .
-git commit -m "init: good morning PWA"
+git commit -m "init: GOOD MORNING PWA"
 git branch -M main
 git remote add origin https://github.com/<username>/<repo>.git
 git push -u origin main

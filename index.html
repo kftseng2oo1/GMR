@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
+<html lang="zh-TW"><head><!-- PWA Meta — auto-injected by PWA 打包神器 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>早安卡片 · 產生器</title>
@@ -415,8 +414,50 @@ input[type=range]::-webkit-slider-thumb{
 .erase-trigger:active{background:rgba(0,212,255,.2);}
 /* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+
+/* ── TEXT DRAG HANDLES ── */
+.txt-handle{
+  position:absolute;
+  border:1.5px dashed rgba(212,168,67,.7);
+  border-radius:6px;
+  cursor:move;touch-action:none;
+  background:rgba(212,168,67,.06);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s;
+  min-width:32px;min-height:20px;
+  box-sizing:border-box;
+}
+.txt-handle:active,.txt-handle.dragging{
+  background:rgba(212,168,67,.18);
+  border-color:var(--gold);
+  border-style:solid;
+}
+.txt-handle .th-icon{
+  font-size:.6rem;color:rgba(212,168,67,.6);
+  position:absolute;top:2px;left:4px;
+  pointer-events:none;line-height:1;
+}
+.txt-handle .th-label{
+  font-size:.52rem;color:rgba(212,168,67,.5);
+  position:absolute;bottom:2px;right:4px;
+  pointer-events:none;white-space:nowrap;
+}
+/* reset btn */
+#pos-reset-btn{
+  font-size:.6rem;padding:4px 10px;border-radius:6px;
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;letter-spacing:.08em;
+}
+#pos-reset-btn:active{background:rgba(255,255,255,.1);}
 </style>
-</head>
+<meta name="application-name" content="GOOD MORNING"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="GOOD MORNING"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(r => console.log('[SW] registered:', r.scope))
+        .catch(e => console.warn('[SW] registration failed:', e));
+    });
+  }</script></head>
 <body>
 
 <header>
@@ -444,8 +485,15 @@ input[type=range]::-webkit-slider-thumb{
 <main>
   <!-- 預覽 -->
   <div class="preview-wrap">
-    <div class="canvas-outer">
+    <div class="canvas-outer" style="position:relative">
       <canvas id="card-canvas" width="810" height="1080"></canvas>
+      <!-- 文字拖移 overlay -->
+      <div id="text-drag-overlay" style="
+        position:absolute;inset:0;pointer-events:none;
+      "></div>
+    </div>
+    <div style="font-size:.58rem;color:var(--muted);text-align:center;margin-top:5px;letter-spacing:.08em;display:none" id="drag-hint">
+      ✥ 長按文字框可拖移位置
     </div>
   </div>
 
@@ -474,7 +522,7 @@ input[type=range]::-webkit-slider-thumb{
           <span class="upload-icon">➕</span>
           <span style="font-size:.58rem;color:var(--gold);letter-spacing:.06em">新增圖片</span>
         </div>
-        <input type="file" id="bg-upload" accept="image/*" multiple style="display:none">
+        <input type="file" id="bg-upload" accept="image/*" multiple="" style="display:none">
       </div>
       <!-- 拖曳區 -->
       <div id="upload-zone" style="
@@ -583,14 +631,17 @@ input[type=range]::-webkit-slider-thumb{
       <div class="plate-options" id="plate-options"></div>
     </div>
     <div class="panel-section">
-      <div class="sec-title">💡 其他設定</div>
+      <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>💡 其他設定</span>
+        <button id="pos-reset-btn">↺ 重置位置</button>
+      </div>
       <div class="toggle-row">
         <span>文字陰影（複雜背景建議開啟）</span>
-        <label class="toggle"><input type="checkbox" id="tog-shadow" checked><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-shadow" checked=""><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>顯示今日日期</span>
-        <label class="toggle"><input type="checkbox" id="tog-date" checked><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-date" checked=""><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>外框線</span>
@@ -656,7 +707,7 @@ input[type=range]::-webkit-slider-thumb{
 </div>
 <div class="em-btns" id="em-btns" style="display:none">
   <div class="em-bmax">
-    <button class="em-btn" id="em-analyze-btn" disabled>🔍 AI 分析圖片文字</button>
+    <button class="em-btn" id="em-analyze-btn" disabled="">🔍 AI 分析圖片文字</button>
     <button class="em-btn" id="em-erase-btn">✨ 開始清除文字</button>
     <button class="em-btn" id="em-apply-btn">✅ 套用並使用此圖</button>
   </div>
@@ -872,7 +923,7 @@ const PHRASES = {
 // ═══════════════════════════════════════════
 let state = {
   tpl: TEMPLATES[0],
-  customBgImg: null,   // ← 上傳的自訂背景
+  customBgImg: null,
   title: '',
   msg: '',
   sign: '',
@@ -883,9 +934,13 @@ let state = {
   shadow: true,
   date: true,
   elder: false,
-  plate: 'dark',   // 'none' | 'dark' | 'light' | 'blur' | 'gold'
-  border: false,    // 外框線
-  divider: false,   // 中間分隔線
+  plate: 'dark',
+  border: false,
+  divider: false,
+  // 文字區塊位置（0-1 比例，相對畫布 810×1080）
+  titlePos: {x: 0.5, y: 0.22},
+  msgPos:   {x: 0.5, y: 0.50},
+  datePos:  {x: 0.5, y: 0.77},
 };
 
 // ═══════════════════════════════════════════
@@ -1867,39 +1922,33 @@ function drawTextHorizontal(){
   const col=state.color;const sc=state.fontScale;
   const title=state.title||'早安';
   const msg=state.msg||'願你今天充滿陽光\n笑口常開，萬事順心！';
+  const tx=state.titlePos.x*CW, ty=state.titlePos.y*CH;
+  const mx=state.msgPos.x*CW,   my=state.msgPos.y*CH;
+  const dx2=state.datePos.x*CW,  dy2=state.datePos.y*CH;
 
   ctx.textAlign='center';ctx.textBaseline='middle';
 
-  // measure title width for plate
+  // title
   ctx.font='bold '+Math.round(108*sc)+'px '+state.font.stack;
   const titleW=ctx.measureText(title).width;
   const titleH=Math.round(108*sc);
+  drawPlate(tx, ty, titleW, titleH, 18);
+  setShadow(state.plate==='none');
+  ctx.fillStyle=col;ctx.fillText(title,tx,ty);
 
-  // measure msg lines for plate
+  drawDivider(CH*0.34);
+
+  // msg
   ctx.font='400 '+Math.round(50*sc)+'px '+state.font.stack;
   const lines=wrapText(ctx,msg,CW-160);
   const lh=Math.round(70*sc),totalH=lines.length*lh;
   const msgMaxW=lines.reduce((m,l)=>Math.max(m,ctx.measureText(l).width),0);
-  const sy=CH*.5-totalH/2+lh/2;
-
-  // ── draw title plate ──
-  drawPlate(CW/2, CH*0.22, titleW, titleH, 18);
-
-  // title text
-  setShadow(state.plate==='none');
-  ctx.font='bold '+Math.round(108*sc)+'px '+state.font.stack;
-  ctx.fillStyle=col;ctx.fillText(title,CW/2,CH*0.22);
-
-  drawDivider(CH*0.34);
-
-  // ── draw msg plate ──
-  drawPlate(CW/2, sy+(totalH-lh)/2, msgMaxW, totalH, 16);
-
-  // msg text
+  const sy=my-totalH/2+lh/2;
+  drawPlate(mx, my, msgMaxW, totalH, 16);
   setShadow(state.plate==='none');
   ctx.font='400 '+Math.round(50*sc)+'px '+state.font.stack;
   ctx.fillStyle=col;
-  lines.forEach((l,i)=>ctx.fillText(l,CW/2,sy+i*lh));
+  lines.forEach((l,i)=>ctx.fillText(l,mx,sy+i*lh));
 
   drawDivider(CH*0.68);
 
@@ -1908,18 +1957,18 @@ function drawTextHorizontal(){
     const ds=now.getFullYear()+' 年 '+(now.getMonth()+1)+' 月 '+now.getDate()+' 日';
     ctx.font='300 '+Math.round(30*sc)+'px '+state.font.stack;
     const dw=ctx.measureText(ds).width;
-    drawPlate(CW/2,CH*0.77,dw,Math.round(30*sc),12);
+    drawPlate(dx2,dy2,dw,Math.round(30*sc),12);
     ctx.fillStyle=col;ctx.globalAlpha=0.85;setShadow(false);
-    ctx.fillText(ds,CW/2,CH*0.77);ctx.globalAlpha=1;
+    ctx.fillText(ds,dx2,dy2);ctx.globalAlpha=1;
   }
   if(state.sign){
     const signTxt='— '+state.sign+' —';
+    const sy2=state.datePos.y*CH+(state.date?0.09*CH:0);
     ctx.font='300 '+Math.round(34*sc)+'px '+state.font.stack;
     const sw2=ctx.measureText(signTxt).width;
-    const sy2=state.date?CH*0.86:CH*0.82;
-    drawPlate(CW/2,sy2,sw2,Math.round(34*sc),12);
+    drawPlate(mx,sy2,sw2,Math.round(34*sc),12);
     setShadow(false);ctx.fillStyle=col;ctx.globalAlpha=0.9;
-    ctx.fillText(signTxt,CW/2,sy2);ctx.globalAlpha=1;
+    ctx.fillText(signTxt,mx,sy2);ctx.globalAlpha=1;
   }
   setShadow(false);
 }
@@ -1996,17 +2045,149 @@ document.getElementById('clear-gallery-btn').addEventListener('click',function()
   draw();
 });
 
+
+// ══════════════════════════════════════════
+//  TEXT DRAG OVERLAY SYSTEM
+// ══════════════════════════════════════════
+const textDragOverlay = document.getElementById('text-drag-overlay');
+const dragHint = document.getElementById('drag-hint');
+
+// 定義三個可拖移區塊
+const TEXT_BLOCKS = [
+  { key:'titlePos', label:'標題', icon:'✥' },
+  { key:'msgPos',   label:'祝福語', icon:'✥' },
+  { key:'datePos',  label:'日期', icon:'✥' },
+];
+
+let overlayHandles = {};  // key -> DOM element
+
+function buildTextOverlay(){
+  textDragOverlay.innerHTML='';
+  overlayHandles = {};
+  const cardRect = canvas.getBoundingClientRect();
+  if(!cardRect.width) return;
+
+  TEXT_BLOCKS.forEach(function(block){
+    const pos = state[block.key];
+    const el = document.createElement('div');
+    el.className = 'txt-handle';
+    el.style.pointerEvents = 'all';
+
+    // 換算：pos 是 0-1（810×1080），overlay 是 CSS px
+    // canvas CSS 尺寸 = cardRect.width × cardRect.height
+    const cssX = pos.x * cardRect.width;
+    const cssY = pos.y * cardRect.height;
+
+    // 置中對齊（transform translate -50% -50%）
+    el.style.left = cssX + 'px';
+    el.style.top  = cssY + 'px';
+    el.style.transform = 'translate(-50%,-50%)';
+    el.style.width  = Math.round(cardRect.width * 0.5) + 'px';
+    el.style.height = '28px';
+
+    const icon = document.createElement('span');
+    icon.className = 'th-icon';
+    icon.textContent = block.icon;
+    el.appendChild(icon);
+
+    const lbl = document.createElement('span');
+    lbl.className = 'th-label';
+    lbl.textContent = block.label;
+    el.appendChild(lbl);
+
+    textDragOverlay.appendChild(el);
+    overlayHandles[block.key] = el;
+
+    addTextDragEvents(el, block.key, cardRect);
+  });
+
+  dragHint.style.display = 'block';
+}
+
+function addTextDragEvents(el, posKey, cardRect){
+  var startX, startY, startPx, startPy, isDragging = false;
+
+  function onStart(e){
+    e.preventDefault();
+    isDragging = true;
+    el.classList.add('dragging');
+    var pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX; startY = pt.clientY;
+    startPx = state[posKey].x; startPy = state[posKey].y;
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+  }
+
+  function onMove(e){
+    if(!isDragging) return;
+    e.preventDefault();
+    var pt = e.touches ? e.touches[0] : e;
+    // 換算位移為 0-1 比例
+    var dx = (pt.clientX - startX) / cardRect.width;
+    var dy = (pt.clientY - startY) / cardRect.height;
+    var newX = Math.min(0.95, Math.max(0.05, startPx + dx));
+    var newY = Math.min(0.97, Math.max(0.03, startPy + dy));
+    state[posKey] = {x: newX, y: newY};
+    // 即時更新 handle 位置
+    el.style.left = (newX * cardRect.width) + 'px';
+    el.style.top  = (newY * cardRect.height) + 'px';
+    // 即時重繪
+    draw();
+  }
+
+  function onEnd(){
+    isDragging = false;
+    el.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchend', onEnd);
+  }
+
+  el.addEventListener('mousedown', onStart);
+  el.addEventListener('touchstart', onStart, {passive:false});
+}
+
+// 當畫面或字體變化時重建 overlay
+function refreshOverlay(){
+  buildTextOverlay();
+}
+
+// 步驟切換時也重建（canvas rect 可能變了）
+document.querySelectorAll('.step-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    setTimeout(refreshOverlay, 50);
+  });
+});
+
+// 重置位置按鈕
+document.getElementById('pos-reset-btn').addEventListener('click', function(){
+  state.titlePos = {x:0.5, y:0.22};
+  state.msgPos   = {x:0.5, y:0.50};
+  state.datePos  = {x:0.5, y:0.77};
+  draw();
+  setTimeout(refreshOverlay, 30);
+});
+
+// 視窗 resize 時重建
+window.addEventListener('resize', function(){ setTimeout(refreshOverlay, 100); });
+
 // ── 啟動：從 localStorage 還原圖庫（延遲確保 DOM 就緒）──
 setTimeout(function(){
   try{ loadGalleryFromLS(); }catch(e){ console.log('init ls err:',e.message); }
 },150);
 
 draw();
+// 初始化 overlay（延遲確保 canvas 已渲染）
+setTimeout(refreshOverlay, 200);
 
 }catch(_globalErr){
   console.log('global catch:',_globalErr&&_globalErr.message);
 }
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
