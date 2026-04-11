@@ -306,7 +306,7 @@ input[type=range]::-webkit-slider-thumb{
 .em-body{padding:12px;}
 /* preview inside modal */
 .em-preview{position:relative;border-radius:8px;overflow:hidden;background:#000;margin-bottom:10px;}
-#em-canvas{display:block;width:100%;max-height:45vh;object-fit:contain;}
+#em-canvas{display:block;width:100%;height:auto;max-height:45vh;}
 .em-overlay{position:absolute;inset:0;pointer-events:all;}
 .em-box{
   position:absolute;border:2px solid #00d4ff;
@@ -1147,7 +1147,6 @@ function emAddLog(msg, cls){
 function openEraser(imgObj, idx){
   emWorkImg=imgObj;emWorkIdx=idx;
   emRegions=[];
-  // reset UI
   emLog.innerHTML='';emLog.style.display='none';
   emOverlay.innerHTML='';
   document.getElementById('em-regions-card').style.display='none';
@@ -1156,11 +1155,11 @@ function openEraser(imgObj, idx){
   emApplyBtn.style.display='none';
   emAnalyzeBtn.disabled=false;
   emAnalyzeBtn.innerHTML='🔍 AI 分析圖片文字';
-  // draw image
-  emCanvas.width=imgObj.img.width;emCanvas.height=imgObj.img.height;
+  // 設定 canvas 解析度為原圖尺寸，讓它保持原圖比例
+  emCanvas.width=imgObj.img.width;
+  emCanvas.height=imgObj.img.height;
   emCtx.drawImage(imgObj.img,0,0);
   emSetStatus('','準備好，點下方按鈕開始分析');
-  // show modal
   eraserModal.classList.add('open');
   emBtns.style.display='block';
   document.body.style.overflow='hidden';
@@ -1413,16 +1412,96 @@ emEraseBtn.addEventListener('click',()=>{
   emSetStatus('active','清除中…');
   const img=emWorkImg.img;
   const W=img.width,H=img.height;
+
+  // ── 關鍵：計算 canvas 在螢幕上的實際渲染區域 ──
+  // emCanvas 的 CSS 寬度 < 原圖寬度，且 object-fit 可能留黑邊
+  // 用 getBoundingClientRect 取得 canvas 元素的 CSS 顯示尺寸
+  const canvasRect = emCanvas.getBoundingClientRect();
+  const cssW = canvasRect.width;   // canvas 元素在螢幕上的 CSS 寬度
+  const cssH = canvasRect.height;  // canvas 元素在螢幕上的 CSS 高度
+
+  // canvas 內部解析度 vs CSS 顯示尺寸的比例
+  // emCanvas.width / cssW = 原圖像素 / CSS像素
+  const scaleX = W / cssW;
+  const scaleY = H / cssH;
+
+  // overlay div 尺寸 = canvas CSS 尺寸（inset:0）
+  // 所以 r.x, r.y, r.w, r.h 都是相對於 overlay (= canvas CSS尺寸) 的比例
+  // 換算到原圖像素：r.x * cssW * scaleX = r.x * W ✓
+  // 但若圖片有 letterbox（黑邊），object-fit:contain 會讓實際影像不填滿整個 canvas
+  // 我們 openEraser 時設 emCanvas.width=img.width, emCanvas.height=img.height
+  // 且 CSS max-height:45vh 用 width:100%，所以 canvas 元素尺寸
+  // 會按比例縮放，不會有 letterbox，r.x*W 應該是對的
+  // 真正的 bug：overlay 的 % 是相對於 overlay 容器（em-preview），
+  // 而 em-canvas 用 display:block;width:100% 撐滿 em-preview
+  // 所以 overlay 和 canvas 完全對齊，r.x*W 換算是正確的
+  //
+  // 實際 bug：使用者拖移框框時，getOverlayRect() 回傳的是
+  // emOverlay 的 bounding rect，而 dx/dy 除以 rect.width/height
+  // 這是 CSS 像素，但 r.x 是 0-1 的比例，這部分正確
+  //
+  // 真正問題：emCanvas.width 設成原圖 width，但圖片被 CSS 縮小顯示
+  // max-height:45vh 可能讓 canvas 的 CSS height < CSS width 應有的比例
+  // 造成 canvas CSS 寬高比 ≠ 原圖寬高比，overlay 的 % 位置就錯了
+  //
+  // 解法：改用 overlay 的實際 CSS 尺寸做比例換算
+
+  const overlayRect = emOverlay.getBoundingClientRect();
+  const ovW = overlayRect.width;
+  const ovH = overlayRect.height;
+
   const wc=document.createElement('canvas');wc.width=W;wc.height=H;
   const wCtx=wc.getContext('2d');wCtx.drawImage(img,0,0);
   const id=wCtx.getImageData(0,0,W,H);
+
   emRegions.forEach(r=>{
-    const rx=Math.max(0,Math.floor(r.x*W)),ry=Math.max(0,Math.floor(r.y*H));
-    const rw=Math.min(W-rx,Math.ceil(r.w*W)),rh=Math.min(H-ry,Math.ceil(r.h*H));
+    // r.x, r.y, r.w, r.h 是相對於 overlay CSS 尺寸的比例 (0-1)
+    // overlay CSS 尺寸 = ovW x ovH
+    // 原圖像素尺寸 = W x H
+    // 換算：像素x = r.x * ovW / ovW * W = r.x * W（若 ovW/W = 1:1 比例）
+    // 但 ovW ≠ W（ovW 是 CSS px，W 是原圖 px）
+    // 需要考慮 canvas 的 object-fit，即圖片在 canvas 內的實際顯示偏移
+
+    // canvas 元素 CSS 尺寸
+    const cvW = canvasRect.width;
+    const cvH = canvasRect.height;
+
+    // 原圖在 canvas 內的縮放比（contain 模式）
+    const imgAspect = W / H;
+    const cvAspect  = cvW / cvH;
+    let renderW, renderH, offsetX=0, offsetY=0;
+    if(imgAspect > cvAspect){
+      // 寬度貼齊，上下有黑邊
+      renderW = cvW;
+      renderH = cvW / imgAspect;
+      offsetY = (cvH - renderH) / 2;
+    } else {
+      // 高度貼齊，左右有黑邊
+      renderH = cvH;
+      renderW = cvH * imgAspect;
+      offsetX = (cvW - renderW) / 2;
+    }
+
+    // overlay 的 % 是相對於 overlay 整體（= canvas CSS 尺寸）
+    // 先換算回 CSS px，減去黑邊 offset，再換算到原圖像素
+    const cssPxX = r.x * cvW - offsetX;
+    const cssPxY = r.y * cvH - offsetY;
+    const cssPxW = r.w * cvW;
+    const cssPxH = r.h * cvH;
+
+    // 換算到原圖像素
+    const pxScale = W / renderW;  // 原圖像素 / 渲染CSS像素
+    const rx = Math.max(0, Math.floor(cssPxX * pxScale));
+    const ry = Math.max(0, Math.floor(cssPxY * pxScale));
+    const rw = Math.min(W - rx, Math.ceil(cssPxW * pxScale));
+    const rh = Math.min(H - ry, Math.ceil(cssPxH * pxScale));
+
+    if(rw<=0||rh<=0) return;
     if(emAlgo==='blur') emGaussBlur(id,W,H,rx,ry,rw,rh,18);
     else if(emAlgo==='mean') emMeanFill(id,W,H,rx,ry,rw,rh);
     else emInpaint(id,W,H,rx,ry,rw,rh,3);
   });
+
   wCtx.putImageData(id,0,0);
   // show result
   const bc=document.getElementById('em-before'),ac=document.getElementById('em-after');
@@ -1432,7 +1511,6 @@ emEraseBtn.addEventListener('click',()=>{
   emApplyBtn.style.display='flex';
   emSetStatus('done','清除完成！確認後點「套用」');
   emAddLog('✅ 文字清除完成','lok');
-  // store result
   emWorkImg._cleaned=wc;
   document.getElementById('em-compare-card').scrollIntoView({behavior:'smooth',block:'nearest'});
 });
