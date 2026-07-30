@@ -174,19 +174,65 @@ main{max-width:480px;margin:0 auto;padding:0 0 130px}
 }
 .ai-use-btn:active{opacity:.7}
 
-/* ── TEXT INPUTS ── */
-.input-group{display:flex;flex-direction:column;gap:10px}
-.input-row{display:flex;flex-direction:column;gap:4px}
-.input-row label{font-size:.65rem;color:var(--muted);letter-spacing:.1em}
+/* ── UI FONT SCALE（雙指縮放語句/輸入框字體）── */
+:root { --ui-fs: 1; }
+
+/* 語句清單 */
+.phrase-item{
+  padding:12px 14px;
+  background:rgba(255,255,255,0.09);
+  border-radius:9px;
+  border:1px solid rgba(255,255,255,0.14);
+  font-size:calc(.85rem * var(--ui-fs));
+  color:#f0ead8;
+  cursor:pointer;
+  transition:background .15s, border-color .15s;
+  line-height:1.6;
+  letter-spacing:.03em;
+}
+.phrase-item:hover{background:rgba(255,255,255,0.13);border-color:rgba(212,168,67,.4);color:#fff;}
+.phrase-item:active{background:rgba(212,168,67,.2);border-color:var(--gold);color:#fff;}
+.phrase-source{
+  display:block;font-size:calc(.6rem * var(--ui-fs));color:var(--gold);opacity:.75;
+  margin-top:4px;letter-spacing:.08em;
+}
+
+/* AI 結果 */
+.ai-result{
+  background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;
+  font-size:calc(.82rem * var(--ui-fs));line-height:1.65;color:var(--text);min-height:52px;
+  border:1px solid var(--border);white-space:pre-wrap;
+}
+.ai-result.placeholder{ color:var(--muted);font-style:italic;font-size:calc(.75rem * var(--ui-fs)); }
+
+/* 輸入框 */
 input[type=text],textarea,select{
   background:rgba(255,255,255,.04);border:1px solid var(--border);
   border-radius:8px;color:var(--text);font-family:'Hiragino Mincho ProN','PingFang TC',serif;
-  font-size:.9rem;padding:10px 12px;outline:none;width:100%;transition:border-color .2s;
+  font-size:calc(.9rem * var(--ui-fs));padding:10px 12px;outline:none;width:100%;transition:border-color .2s;
 }
 input[type=text]:focus,textarea:focus,select:focus{border-color:var(--gold)}
 textarea{resize:none;line-height:1.6}
 select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M6 8L0 0h12z' fill='%23d4a843'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2);font-size:.8rem}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2);font-size:calc(.8rem * var(--ui-fs))}
+.input-row label{font-size:calc(.65rem * var(--ui-fs));color:var(--muted);letter-spacing:.1em}
+
+/* 縮放提示 badge */
+#zoom-badge{
+  position:fixed;bottom:90px;right:14px;z-index:150;
+  background:rgba(20,20,30,.85);border:1px solid rgba(212,168,67,.4);
+  border-radius:20px;padding:4px 10px;
+  font-size:.62rem;color:var(--gold);letter-spacing:.08em;
+  opacity:0;transition:opacity .3s;pointer-events:none;
+  white-space:nowrap;
+}
+#zoom-badge.show{opacity:1;}
+
+/* 縮放觸控區（覆蓋在語句和輸入區上） */
+.pinch-zone{
+  touch-action:pan-y;/* 允許垂直滾動，但我們自己處理 pinch */
+  user-select:none;-webkit-user-select:none;
+}
 
 /* ── TOGGLES ── */
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
@@ -569,7 +615,7 @@ input[type=range]::-webkit-slider-thumb{
     <div class="panel-section">
       <div class="sec-title">📚 常用語句快選</div>
       <div class="phrase-cats" id="phrase-cats"></div>
-      <div class="phrase-list" id="phrase-list"></div>
+      <div class="phrase-list pinch-zone" id="phrase-list"></div>
     </div>
   </div>
 
@@ -577,7 +623,7 @@ input[type=range]::-webkit-slider-thumb{
   <div class="step-pane" id="pane-2">
     <div class="panel-section">
       <div class="sec-title">✏ 自訂文字</div>
-      <div class="input-group">
+      <div class="input-group pinch-zone">
         <div class="input-row">
           <label>主標題（最多 10 字）</label>
           <input type="text" id="in-title" placeholder="早安 ☀️" maxlength="10">
@@ -677,6 +723,9 @@ input[type=range]::-webkit-slider-thumb{
     letter-spacing:.12em;cursor:pointer;
   ">✕ 關閉</button>
 </div>
+
+<!-- ── 縮放提示 Badge ── -->
+<div id="zoom-badge">🔍 字體 100%</div>
 
 <!-- ═══ ERASER MODAL ═══ -->
 <div id="eraser-modal">
@@ -2091,6 +2140,82 @@ document.getElementById('clear-gallery-btn').addEventListener('click',function()
 
 
 // ══════════════════════════════════════════
+//  PINCH-TO-ZOOM UI FONT SCALE
+// ══════════════════════════════════════════
+var uiFs = 1.0;          // 目前字體縮放比例
+var UI_FS_MIN = 0.7;
+var UI_FS_MAX = 2.2;
+var zoomBadge = document.getElementById('zoom-badge');
+var zoomBadgeTimer = null;
+
+function setUiFs(val){
+  uiFs = Math.min(UI_FS_MAX, Math.max(UI_FS_MIN, val));
+  document.documentElement.style.setProperty('--ui-fs', uiFs.toFixed(2));
+  // 顯示 badge
+  zoomBadge.textContent = '🔍 字體 ' + Math.round(uiFs * 100) + '%';
+  zoomBadge.classList.add('show');
+  clearTimeout(zoomBadgeTimer);
+  zoomBadgeTimer = setTimeout(function(){ zoomBadge.classList.remove('show'); }, 1500);
+}
+
+function setupPinchZone(el){
+  var startDist = 0;
+  var startFs   = 1.0;
+  var pinching  = false;
+
+  function getTouchDist(e){
+    var t = e.touches;
+    var dx = t[0].clientX - t[1].clientX;
+    var dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  el.addEventListener('touchstart', function(e){
+    if(e.touches.length === 2){
+      pinching  = true;
+      startDist = getTouchDist(e);
+      startFs   = uiFs;
+      e.preventDefault();
+    }
+  }, {passive: false});
+
+  el.addEventListener('touchmove', function(e){
+    if(!pinching || e.touches.length !== 2) return;
+    e.preventDefault();
+    var dist  = getTouchDist(e);
+    var ratio = dist / startDist;
+    setUiFs(startFs * ratio);
+  }, {passive: false});
+
+  el.addEventListener('touchend', function(e){
+    if(e.touches.length < 2) pinching = false;
+  }, {passive: true});
+
+  // 雙擊重置
+  var lastTap = 0;
+  el.addEventListener('touchend', function(e){
+    if(e.touches.length > 0) return;
+    var now = Date.now();
+    if(now - lastTap < 300){
+      setUiFs(1.0);
+    }
+    lastTap = now;
+  }, {passive: true});
+}
+
+// 套用到所有 pinch-zone 元素（含動態生成的）
+function initPinchZones(){
+  document.querySelectorAll('.pinch-zone').forEach(setupPinchZone);
+  // AI 結果區也加
+  var aiResult = document.getElementById('ai-result');
+  if(aiResult && !aiResult._pinchInited){
+    aiResult._pinchInited = true;
+    aiResult.classList.add('pinch-zone');
+    setupPinchZone(aiResult);
+  }
+}
+
+// ══════════════════════════════════════════
 //  TEXT DRAG OVERLAY SYSTEM
 // ══════════════════════════════════════════
 const textDragOverlay = document.getElementById('text-drag-overlay');
@@ -2203,6 +2328,7 @@ function refreshOverlay(){
 document.querySelectorAll('.step-tab').forEach(function(tab){
   tab.addEventListener('click', function(){
     setTimeout(refreshOverlay, 50);
+    setTimeout(initPinchZones, 80);  // 重新套用 pinch
   });
 });
 
@@ -2226,6 +2352,8 @@ setTimeout(function(){
 draw();
 // 初始化 overlay（延遲確保 canvas 已渲染）
 setTimeout(refreshOverlay, 200);
+// 初始化 pinch-to-zoom
+setTimeout(initPinchZones, 250);
 
 }catch(_globalErr){
   console.log('global catch:',_globalErr&&_globalErr.message);
