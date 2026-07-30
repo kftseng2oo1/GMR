@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="zh-TW"><head><!-- PWA Meta — auto-injected by PWA 打包神器 -->
+<html lang="zh-TW">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>早安卡片 · 產生器</title>
@@ -450,14 +451,7 @@ input[type=range]::-webkit-slider-thumb{
 }
 #pos-reset-btn:active{background:rgba(255,255,255,.1);}
 </style>
-<meta name="application-name" content="GOOD MORNING"><meta name="description" content=""><meta name="theme-color" content="#1a73e8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="GOOD MORNING"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon.svg"><script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(r => console.log('[SW] registered:', r.scope))
-        .catch(e => console.warn('[SW] registration failed:', e));
-    });
-  }</script></head>
+</head>
 <body>
 
 <header>
@@ -522,7 +516,7 @@ input[type=range]::-webkit-slider-thumb{
           <span class="upload-icon">➕</span>
           <span style="font-size:.58rem;color:var(--gold);letter-spacing:.06em">新增圖片</span>
         </div>
-        <input type="file" id="bg-upload" accept="image/*" multiple="" style="display:none">
+        <input type="file" id="bg-upload" accept="image/*" multiple style="display:none">
       </div>
       <!-- 拖曳區 -->
       <div id="upload-zone" style="
@@ -637,11 +631,11 @@ input[type=range]::-webkit-slider-thumb{
       </div>
       <div class="toggle-row">
         <span>文字陰影（複雜背景建議開啟）</span>
-        <label class="toggle"><input type="checkbox" id="tog-shadow" checked=""><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-shadow" checked><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>顯示今日日期</span>
-        <label class="toggle"><input type="checkbox" id="tog-date" checked=""><span class="knob"></span></label>
+        <label class="toggle"><input type="checkbox" id="tog-date" checked><span class="knob"></span></label>
       </div>
       <div class="toggle-row">
         <span>外框線</span>
@@ -658,8 +652,30 @@ input[type=range]::-webkit-slider-thumb{
 <div class="save-bar">
   <div class="max-wrap">
     <button id="save-btn">📥 儲存圖片 → 傳至 LINE</button>
-    <p class="save-hint">儲存後長按圖片即可分享到 LINE</p>
+    <p class="save-hint">點擊後長按圖片 → 選「儲存到相片」→ 分享到 LINE</p>
   </div>
+</div>
+
+<!-- ── 儲存預覽 Modal（iOS 長按儲存用）── -->
+<div id="save-modal" style="
+  display:none;position:fixed;inset:0;z-index:600;
+  background:rgba(0,0,0,.92);
+  flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:20px;
+">
+  <div style="font-size:.75rem;color:#fff;letter-spacing:.1em;text-align:center;line-height:1.8">
+    👇 長按圖片 → 選「<b>儲存到相片</b>」<br>然後到 LINE 傳送
+  </div>
+  <img id="save-preview-img" style="
+    max-width:85vw;max-height:72vh;
+    border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);
+    display:block;
+  " src="" alt="早安卡片">
+  <button id="save-modal-close" style="
+    padding:12px 32px;border-radius:10px;border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.1);color:#fff;font-size:.85rem;
+    letter-spacing:.12em;cursor:pointer;
+  ">✕ 關閉</button>
 </div>
 
 <!-- ═══ ERASER MODAL ═══ -->
@@ -707,7 +723,7 @@ input[type=range]::-webkit-slider-thumb{
 </div>
 <div class="em-btns" id="em-btns" style="display:none">
   <div class="em-bmax">
-    <button class="em-btn" id="em-analyze-btn" disabled="">🔍 AI 分析圖片文字</button>
+    <button class="em-btn" id="em-analyze-btn" disabled>🔍 AI 分析圖片文字</button>
     <button class="em-btn" id="em-erase-btn">✨ 開始清除文字</button>
     <button class="em-btn" id="em-apply-btn">✅ 套用並使用此圖</button>
   </div>
@@ -2021,13 +2037,41 @@ function drawTextVertical(){
   setShadow(false);
 }
 
-// ── Save ──
+// ── Save（iOS 相容版）──
 document.getElementById('save-btn').addEventListener('click',function(){
-  var tmp=document.createElement('canvas');tmp.width=810;tmp.height=1080;
-  tmp.getContext('2d').drawImage(canvas,0,0);
-  var a=document.createElement('a');
-  a.href=tmp.toDataURL('image/jpeg',0.88);
-  a.download='早安卡片.jpg';a.click();
+  // 先確保 overlay 不在畫面上（不畫拖移框）
+  var overlay = document.getElementById('text-drag-overlay');
+  var prevPE = overlay.style.pointerEvents;
+  overlay.style.opacity = '0';
+
+  // 產生高解析度輸出
+  var tmp = document.createElement('canvas');
+  tmp.width = 810; tmp.height = 1080;
+  tmp.getContext('2d').drawImage(canvas, 0, 0);
+
+  overlay.style.opacity = '1';
+
+  var dataUrl = tmp.toDataURL('image/jpeg', 0.92);
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  if(isIOS){
+    // iOS Safari：用 img 標籤顯示，讓使用者長按儲存
+    var modal = document.getElementById('save-modal');
+    var img   = document.getElementById('save-preview-img');
+    img.src   = dataUrl;
+    modal.style.display = 'flex';
+  } else {
+    // 其他瀏覽器：直接下載
+    var a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = '早安卡片.jpg';
+    a.click();
+  }
+});
+
+document.getElementById('save-modal-close').addEventListener('click',function(){
+  document.getElementById('save-modal').style.display = 'none';
+  document.getElementById('save-preview-img').src = '';
 });
 
 // ── 清除全部圖庫 ──
@@ -2188,6 +2232,5 @@ setTimeout(refreshOverlay, 200);
 }
 })();
 </script>
-
-
-</body></html>
+</body>
+</html>
