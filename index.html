@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
 <title>早安卡片 · 產生器</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -1845,7 +1843,20 @@ PLATES.forEach((p,i)=>{
 document.querySelectorAll('.dir-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');state.dir=btn.dataset.dir;draw();
+    btn.classList.add('active');
+    state.dir=btn.dataset.dir;
+    // 切換方向時重置到合理預設位置
+    if(state.dir==='v'){
+      state.titlePos={x:0.78,y:0.14};
+      state.msgPos  ={x:0.45,y:0.40};
+      state.datePos ={x:0.50,y:0.92};
+    } else {
+      state.titlePos={x:0.5,y:0.22};
+      state.msgPos  ={x:0.5,y:0.50};
+      state.datePos ={x:0.5,y:0.77};
+    }
+    draw();
+    setTimeout(refreshOverlay,30);
   });
 });
 
@@ -2044,36 +2055,44 @@ function drawTextVertical(){
   const col=state.color;const sc=state.fontScale;
   const title=state.title||'早安';
   const msg=state.msg||'願你今天充滿陽光笑口常開萬事順心';
+  // 直式：titlePos 控制標題欄的 X 中心和起始 Y
+  const tTx = state.titlePos.x * CW;
+  const tStartY = state.titlePos.y * CH;
+  // msgPos 控制祝福語欄群組的中心
+  const mCx = state.msgPos.x * CW;
+  const mStartY = state.msgPos.y * CH;
+  // datePos 控制日期
+  const dX = state.datePos.x * CW;
+  const dY = state.datePos.y * CH;
+
   ctx.textAlign='center';ctx.textBaseline='middle';
 
-  // pre-measure title plate (vertical column)
+  // title（直排）
   ctx.font='bold '+Math.round(92*sc)+'px '+state.font.stack;
   const tCharH=Math.round(102*sc);
   const tTotalH=title.length*tCharH;
-  const tTx=CW*.78;
-  drawPlate(tTx, CH*.14+(tTotalH/2)-tCharH/2, Math.round(92*sc), tTotalH, 16);
-
-  // title chars
+  drawPlate(tTx, tStartY+tTotalH/2-tCharH/2, Math.round(92*sc), tTotalH, 16);
   setShadow(state.plate==='none');
-  let ty=CH*.14;
+  let ty=tStartY;
   for(const ch of title){ctx.fillStyle=col;ctx.fillText(ch,tTx,ty);ty+=tCharH;}
 
-  // msg column plate
+  // msg（多欄直排，以 msgPos 為群組中心）
   ctx.font='400 '+Math.round(52*sc)+'px '+state.font.stack;
   const clean=msg.replace(/\n/g,'');
   const colStep=Math.round(58*sc);
-  const maxPerCol=Math.floor((CH*.68)/colStep);
+  const maxPerCol=Math.floor((CH-mStartY*2)/colStep)||1;
   const numCols=Math.ceil(clean.length/maxPerCol);
   const msgBlockW=numCols*colStep;
   const msgBlockH=Math.min(clean.length,maxPerCol)*colStep;
-  const msgCx=CW*.58-(numCols-1)*colStep/2;
-  drawPlate(msgCx,CH*.14+msgBlockH/2-colStep/2, msgBlockW, msgBlockH, 14);
-
+  // 群組左上角
+  const mgLeft = mCx + msgBlockW/2;  // 從右往左排，第一欄在右邊
+  drawPlate(mCx, mStartY+msgBlockH/2-colStep/2, msgBlockW, msgBlockH, 14);
   setShadow(state.plate==='none');
-  let cx2=CW*.58,cy=CH*.14;
+  let cx2=mgLeft, cy=mStartY;
   for(let i=0;i<clean.length;i++){
-    if(i>0&&i%maxPerCol===0){cx2-=Math.round(58*sc);cy=CH*.14;}
-    ctx.fillStyle=col;ctx.fillText(clean[i],cx2,cy);cy+=colStep;}
+    if(i>0&&i%maxPerCol===0){cx2-=colStep;cy=mStartY;}
+    ctx.fillStyle=col;ctx.fillText(clean[i],cx2,cy);cy+=colStep;
+  }
 
   drawDivider(CH*.87);
   if(state.date){
@@ -2081,9 +2100,9 @@ function drawTextVertical(){
     const ds=now.getFullYear()+'.'+(now.getMonth()+1)+'.'+now.getDate();
     ctx.font='300 '+Math.round(28*sc)+'px '+state.font.stack;
     const dw=ctx.measureText(ds).width;
-    drawPlate(CW/2,CH*.92,dw,Math.round(28*sc),10);
+    drawPlate(dX,dY,dw,Math.round(28*sc),10);
     ctx.fillStyle=col;ctx.globalAlpha=.8;setShadow(false);
-    ctx.fillText(ds,CW/2,CH*.92);ctx.globalAlpha=1;
+    ctx.fillText(ds,dX,dY);ctx.globalAlpha=1;
   }
   setShadow(false);
 }
@@ -2237,6 +2256,7 @@ function buildTextOverlay(){
   overlayHandles = {};
   const cardRect = canvas.getBoundingClientRect();
   if(!cardRect.width) return;
+  const isV = state.dir === 'v';
 
   TEXT_BLOCKS.forEach(function(block){
     const pos = state[block.key];
@@ -2244,17 +2264,24 @@ function buildTextOverlay(){
     el.className = 'txt-handle';
     el.style.pointerEvents = 'all';
 
-    // 換算：pos 是 0-1（810×1080），overlay 是 CSS px
-    // canvas CSS 尺寸 = cardRect.width × cardRect.height
     const cssX = pos.x * cardRect.width;
     const cssY = pos.y * cardRect.height;
-
-    // 置中對齊（transform translate -50% -50%）
     el.style.left = cssX + 'px';
     el.style.top  = cssY + 'px';
     el.style.transform = 'translate(-50%,-50%)';
-    el.style.width  = Math.round(cardRect.width * 0.5) + 'px';
-    el.style.height = '28px';
+
+    // 直式：標題/祝福語框是窄高形，日期是扁形
+    if(isV && block.key === 'titlePos'){
+      el.style.width  = '32px';
+      el.style.height = Math.round(cardRect.height * 0.25) + 'px';
+    } else if(isV && block.key === 'msgPos'){
+      el.style.width  = Math.round(cardRect.width * 0.45) + 'px';
+      el.style.height = Math.round(cardRect.height * 0.35) + 'px';
+    } else {
+      // 橫式 or 日期：寬扁形
+      el.style.width  = Math.round(cardRect.width * 0.5) + 'px';
+      el.style.height = '28px';
+    }
 
     const icon = document.createElement('span');
     icon.className = 'th-icon';
@@ -2268,7 +2295,6 @@ function buildTextOverlay(){
 
     textDragOverlay.appendChild(el);
     overlayHandles[block.key] = el;
-
     addTextDragEvents(el, block.key, cardRect);
   });
 
@@ -2336,9 +2362,15 @@ document.querySelectorAll('.step-tab').forEach(function(tab){
 
 // 重置位置按鈕
 document.getElementById('pos-reset-btn').addEventListener('click', function(){
-  state.titlePos = {x:0.5, y:0.22};
-  state.msgPos   = {x:0.5, y:0.50};
-  state.datePos  = {x:0.5, y:0.77};
+  if(state.dir==='v'){
+    state.titlePos={x:0.78,y:0.14};
+    state.msgPos  ={x:0.45,y:0.40};
+    state.datePos ={x:0.50,y:0.92};
+  } else {
+    state.titlePos={x:0.5,y:0.22};
+    state.msgPos  ={x:0.5,y:0.50};
+    state.datePos ={x:0.5,y:0.77};
+  }
   draw();
   setTimeout(refreshOverlay, 30);
 });
