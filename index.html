@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-  <title>早安卡片 · 產生器</title>
+<title>早安卡片 · 產生器</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -318,6 +316,47 @@ input[type=range]::-webkit-slider-thumb{
 }
 #save-btn:active{opacity:.85;transform:scale(.97)}
 .save-hint{font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-align:center;margin-top:4px}
+.save-row{display:flex;gap:8px}
+.save-row #save-btn{flex:1.4;letter-spacing:.12em}
+#video-btn{
+  flex:1;padding:16px 8px;border-radius:12px;cursor:pointer;
+  background:rgba(212,168,67,.1);border:1px solid var(--gold);color:var(--gold2);
+  font-family:'Hiragino Mincho ProN','PingFang TC',serif;font-size:1rem;font-weight:700;letter-spacing:.08em;
+  transition:opacity .2s,transform .15s;
+}
+#video-btn:active{opacity:.85;transform:scale(.97)}
+body.elder #video-btn{ font-size:calc(1rem * var(--fs)); padding:18px 6px; }
+
+/* ── 動畫旁白 ── */
+.narr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.narr-grid label{display:block;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:4px}
+.narr-btns{display:flex;gap:8px;margin-top:10px}
+.narr-btns button{
+  flex:1;padding:12px 6px;border-radius:10px;cursor:pointer;font-size:.8rem;letter-spacing:.1em;
+  border:1px solid rgba(212,168,67,.45);background:rgba(212,168,67,.08);color:var(--gold2);
+}
+.narr-btns button.primary{background:linear-gradient(135deg,#c9a84c,#f0d080,#c9a84c);color:#1a1100;border:none;font-weight:700}
+.narr-note{font-size:.6rem;color:var(--muted);line-height:1.7;margin-top:8px;letter-spacing:.05em}
+body.elder .narr-btns button{ font-size:calc(.8rem * var(--fs)); padding:15px 6px; }
+body.elder .narr-grid label{ font-size:calc(.6rem * var(--fs)); }
+
+#vid-modal{
+  display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.94);
+  flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 16px;
+}
+#vid-modal canvas,#vid-modal video{
+  max-width:86vw;max-height:62vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;background:#000;
+}
+#vid-status{font-size:.78rem;color:#fff;letter-spacing:.08em;text-align:center;line-height:1.8;min-height:1.4em}
+#vid-prog{width:min(86vw,360px);height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden}
+#vid-prog div{height:100%;width:0;background:var(--gold);transition:width .1s linear}
+.vid-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.vid-actions button,.vid-actions a{
+  padding:12px 20px;border-radius:10px;font-size:.85rem;letter-spacing:.1em;cursor:pointer;text-decoration:none;
+  border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;
+}
+.vid-actions .primary{background:linear-gradient(135deg,#c9a84c,#f0d080,#c9a84c);color:#1a1100;border:none;font-weight:700}
+body.elder .vid-actions button,body.elder .vid-actions a{ font-size:calc(.85rem * var(--fs)); padding:15px 22px; }
 
 /* ── PANES ── */
 .step-pane{display:none}
@@ -640,6 +679,37 @@ input[type=range]::-webkit-slider-thumb{
         </div>
       </div>
     </div>
+    <div class="panel-section">
+      <div class="sec-title">🔊 動畫旁白（有聲影片）</div>
+      <div class="narr-grid">
+        <div>
+          <label>聲音</label>
+          <select id="narr-voice">
+            <option value="female">曉臻・溫柔女聲</option>
+            <option value="female2">曉雨・活潑女聲</option>
+            <option value="male">雲哲・沉穩男聲</option>
+          </select>
+        </div>
+        <div>
+          <label>語速</label>
+          <select id="narr-rate">
+            <option value="-20">慢慢念</option>
+            <option value="-8" selected>稍慢</option>
+            <option value="0">正常</option>
+            <option value="10">輕快</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span>旁白也念出署名</span>
+        <label class="toggle"><input type="checkbox" id="narr-sign" checked><span class="knob"></span></label>
+      </div>
+      <div class="narr-btns">
+        <button id="narr-preview-btn">▶ 試聽動畫</button>
+        <button id="narr-export-btn" class="primary">🎬 匯出影片</button>
+      </div>
+      <div class="narr-note">文字會隨旁白一個字一個字浮現，匯出 MP4 後可直接分享到 LINE。</div>
+    </div>
   </div>
 
   <!-- STEP 4 : 排版 -->
@@ -699,8 +769,11 @@ input[type=range]::-webkit-slider-thumb{
 
 <div class="save-bar">
   <div class="max-wrap">
-    <button id="save-btn">📥 儲存圖片 → 傳至 LINE</button>
-    <p class="save-hint">點擊後長按圖片 → 選「儲存到相片」→ 分享到 LINE</p>
+    <div class="save-row">
+      <button id="save-btn">📥 儲存圖片</button>
+      <button id="video-btn">🎬 有聲影片</button>
+    </div>
+    <p class="save-hint">圖片：長按儲存到相片｜影片：文字隨旁白浮現，可直接分享到 LINE</p>
   </div>
 </div>
 
@@ -724,6 +797,19 @@ input[type=range]::-webkit-slider-thumb{
     background:rgba(255,255,255,.1);color:#fff;font-size:.85rem;
     letter-spacing:.12em;cursor:pointer;
   ">✕ 關閉</button>
+</div>
+
+<!-- ── 有聲影片 Modal ── -->
+<div id="vid-modal">
+  <div id="vid-status">準備中…</div>
+  <canvas id="vid-canvas" width="810" height="1080"></canvas>
+  <video id="vid-player" playsinline controls style="display:none"></video>
+  <div id="vid-prog"><div></div></div>
+  <div class="vid-actions" id="vid-actions">
+    <button id="vid-share" class="primary" style="display:none">📤 分享到 LINE</button>
+    <a id="vid-download" style="display:none">💾 下載影片</a>
+    <button id="vid-close">✕ 關閉</button>
+  </div>
 </div>
 
 <!-- ── 縮放提示 Badge ── -->
@@ -1905,6 +1991,13 @@ const ctx=canvas.getContext('2d');
 const CW=810,CH=1080;
 
 function draw(){
+  drawBackground();
+  drawBorder();
+  if(state.dir==='v') drawTextVertical();
+  else drawTextHorizontal();
+}
+
+function drawBackground(){
   ctx.clearRect(0,0,CW,CH);
   // 1. background
   if(state.customBgImg){
@@ -1923,9 +2016,6 @@ function draw(){
     scrim.addColorStop(0,'rgba(0,0,0,0.05)');scrim.addColorStop(.5,'rgba(0,0,0,0.18)');scrim.addColorStop(1,'rgba(0,0,0,0.45)');
     ctx.fillStyle=scrim;ctx.fillRect(0,0,CW,CH);
   }
-  drawBorder();
-  if(state.dir==='v') drawTextVertical();
-  else drawTextHorizontal();
 }
 
 function drawBorder(){
@@ -2108,6 +2198,330 @@ function drawTextVertical(){
   }
   setShadow(false);
 }
+
+// ═══════════════════════════════════════════
+//  動畫旁白 / 有聲影片
+// ═══════════════════════════════════════════
+var narrAC = null;          // AudioContext（iOS 必須在點擊當下建立/resume）
+var narrCache = {};         // key → AudioBuffer
+var narrRun = null;         // 目前播放中的動畫
+var narrBlobUrl = '';
+var narrFile = null;
+
+function narrEnsureAC(){
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  if(!narrAC) narrAC = new AC();
+  if(narrAC.state === 'suspended'){ try{ narrAC.resume(); }catch(e){} }
+  return narrAC;
+}
+
+function narrStrip(s){
+  return String(s||'').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}️‍]/gu,'').trim();
+}
+
+function narrSpeechText(){
+  var title = narrStrip(state.title||'早安');
+  var msg = narrStrip(state.msg||(state.dir==='v'?'願你今天充滿陽光笑口常開萬事順心':'願你今天充滿陽光\n笑口常開，萬事順心！'));
+  msg = msg.replace(/\n+/g,'，');
+  var t = title ? title.replace(/[，。！？!?,.\s]+$/,'') + '。' : '';
+  t += msg;
+  if(document.getElementById('narr-sign').checked && state.sign){
+    t += (/[。！？!?]$/.test(t)?'':'。') + narrStrip(state.sign);
+  }
+  return t;
+}
+
+function narrDecode(ac, ab){
+  return new Promise(function(res, rej){
+    var p = ac.decodeAudioData(ab, res, rej);   // 舊版 Safari 只支援 callback
+    if(p && p.then) p.then(res, rej);
+  });
+}
+
+async function narrGetAudio(text){
+  var voice = document.getElementById('narr-voice').value;
+  var rate = +document.getElementById('narr-rate').value;
+  var key = voice+'|'+rate+'|'+text;
+  if(narrCache[key]) return narrCache[key];
+  var resp = await fetch(PROXY + '/tts', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ text:text, voice:voice, rate:rate })
+  });
+  var ct = resp.headers.get('Content-Type') || '';
+  if(!resp.ok || ct.indexOf('json') >= 0){
+    var msg = 'HTTP ' + resp.status;
+    try{ var j = await resp.json(); msg = j.error + (j.detail ? '（'+j.detail.join('；')+'）' : ''); }catch(e){}
+    throw new Error(msg);
+  }
+  var buf = await narrDecode(narrAC, await resp.arrayBuffer());
+  narrCache[key] = buf;
+  return buf;
+}
+
+// 把目前卡片拆成：背景層、背板裝飾層、逐字資料
+function narrCaptureLayers(){
+  function mk(){ var c=document.createElement('canvas'); c.width=CW; c.height=CH; return c; }
+  var bg = mk(), deco = mk(), calls = [];
+  // 背景 + 外框
+  drawBackground(); drawBorder();
+  bg.getContext('2d').drawImage(canvas,0,0);
+  // 背板/分隔線（攔截 fillText，只記錄不畫字）
+  // 跑兩次：第一次找出最後一個「標題/祝福語」字；第二次在那之後清空畫布，
+  // 讓日期、署名的背板落在獨立的 tail 圖層，跟著文字一起淡入
+  function isTailFont(f){ return /\b(lighter|[1-3]00)\b/.test(f) && !/\b(bold|bolder|[6-9]00)\b/.test(f); }
+  var lastMain = -1, idx = 0, tail = mk();
+  function pass(cut){
+    ctx.clearRect(0,0,CW,CH); idx = 0;
+    ctx.fillText = function(txt,x,y){
+      if(!cut){
+        if(!isTailFont(ctx.font)) lastMain = idx;
+        calls.push({ txt:String(txt), x:x, y:y, font:ctx.font, align:ctx.textAlign, base:ctx.textBaseline,
+          fill:ctx.fillStyle, alpha:ctx.globalAlpha, sc:ctx.shadowColor, sb:ctx.shadowBlur,
+          m: ctx.getTransform ? ctx.getTransform() : null });
+      } else if(idx === lastMain){
+        deco.getContext('2d').drawImage(canvas,0,0);
+        ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,CW,CH); ctx.restore();
+      }
+      idx++;
+    };
+    try{ if(state.dir==='v') drawTextVertical(); else drawTextHorizontal(); }
+    finally{ delete ctx.fillText; }
+  }
+  pass(false);
+  pass(true);
+  if(lastMain < 0) deco.getContext('2d').drawImage(canvas,0,0);
+  else tail.getContext('2d').drawImage(canvas,0,0);
+  draw();   // 還原預覽
+
+  // 依字重分組：bold=標題、300=日期/署名、其餘=祝福語；拆成單字並算好位置
+  var glyphs = [];
+  calls.forEach(function(c){
+    var f = c.font;
+    var group = /\b(bold|bolder|[6-9]00)\b/.test(f) ? 'title' : isTailFont(f) ? 'tail' : 'msg';
+    ctx.save(); ctx.font = f;
+    var chars = Array.from(c.txt);
+    var full = ctx.measureText(c.txt).width;
+    var x0 = c.align==='center' ? c.x - full/2 : (c.align==='right'||c.align==='end') ? c.x - full : c.x;
+    var acc = '';
+    chars.forEach(function(ch){
+      glyphs.push({ ch:ch, x:x0 + ctx.measureText(acc).width, y:c.y, c:c, group:group });
+      acc += ch;
+    });
+    ctx.restore();
+  });
+  return { bg:bg, deco:deco, tail:tail, glyphs:glyphs };
+}
+
+function narrWeight(ch){
+  if(/[，、；：,;:]/.test(ch)) return 0.55;
+  if(/[。！？!?…]/.test(ch)) return 0.9;
+  if(/[\s\-—–·~「」『』（）()“”"']/.test(ch)) return 0;
+  if(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}️‍]/u.test(ch)) return 0;
+  return 1;
+}
+
+// 依旁白長度排好每個字出現的時間
+function narrSchedule(layers, A0, dur, readSign){
+  var lead = 0.12, trail = 0.25;
+  var speak = layers.glyphs.filter(function(g){ return g.group!=='tail'; });
+  var signW = (readSign && state.sign) ? Array.from(narrStrip(state.sign)).reduce(function(s,ch){return s+narrWeight(ch);},0) + 0.9 : 0;
+  var total = speak.reduce(function(s,g){ return s+narrWeight(g.ch); }, 0) + 0.9 + signW;
+  var span = Math.max(0.5, dur - lead - trail);
+  var cum = 0, seenMsg = false;
+  speak.forEach(function(g){
+    if(g.group==='msg' && !seenMsg){ seenMsg = true; cum += 0.9; }   // 標題後的停頓
+    g.t = A0 + lead + (cum/total)*span - 0.05;
+    cum += narrWeight(g.ch);
+  });
+  var tailT = A0 + lead + (cum/total)*span + 0.1;
+  layers.glyphs.forEach(function(g){ if(g.group==='tail') g.t = tailT; });
+  layers.tailT = tailT;
+  var lastT = layers.glyphs.reduce(function(m,g){ return Math.max(m,g.t); }, A0 + dur);
+  return Math.max(A0 + dur, lastT + 0.8) + 1.6;   // 影片總長
+}
+
+function narrEase(x){ x = Math.min(1,Math.max(0,x)); return 1 - Math.pow(1-x,3); }
+
+// 光點（固定亂數，每次一樣）
+var NARR_DOTS = (function(){
+  var a=[], s=7;
+  function r(){ s=(s*16807)%2147483647; return s/2147483647; }
+  for(var i=0;i<26;i++) a.push({ x:r()*CW, y:r()*CH, r:2+r()*4, sp:18+r()*30, ph:r()*6.28 });
+  return a;
+})();
+
+function narrRenderFrame(c, L, t, T){
+  c.setTransform(1,0,0,1,0,0);
+  c.globalAlpha = 1; c.shadowColor='transparent'; c.shadowBlur=0;
+  c.fillStyle = '#000'; c.fillRect(0,0,CW,CH);
+  // 背景：慢慢拉近 + 淡入
+  var z = 1.07 - 0.07*Math.min(1, t/T);
+  c.globalAlpha = narrEase(t/0.6);
+  c.drawImage(L.bg, CW*(1-z)/2, CH*(1-z)/2, CW*z, CH*z);
+  // 飄浮光點
+  NARR_DOTS.forEach(function(d){
+    var y = ((d.y - d.sp*t) % CH + CH) % CH;
+    var a = (0.25 + 0.25*Math.sin(t*1.6 + d.ph)) * narrEase(t/1.2);
+    var g = c.createRadialGradient(d.x,y,0,d.x,y,d.r*3);
+    g.addColorStop(0,'rgba(255,240,190,'+a+')'); g.addColorStop(1,'rgba(255,240,190,0)');
+    c.globalAlpha = 1; c.fillStyle = g;
+    c.beginPath(); c.arc(d.x,y,d.r*3,0,6.283); c.fill();
+  });
+  // 背板
+  c.globalAlpha = narrEase((t-0.3)/0.6);
+  c.drawImage(L.deco,0,0);
+  c.globalAlpha = narrEase((t - L.tailT)/0.7);
+  if(c.globalAlpha > 0) c.drawImage(L.tail,0,0);
+  // 逐字
+  L.glyphs.forEach(function(g){
+    var p = (t - g.t) / (g.group==='tail' ? 0.7 : 0.32);
+    if(p <= 0) return;
+    var e = narrEase(p), k = g.c;
+    if(k.m) c.setTransform(k.m); else c.setTransform(1,0,0,1,0,0);
+    c.font = k.font; c.textAlign = 'left'; c.textBaseline = k.base;
+    c.fillStyle = k.fill; c.shadowColor = k.sc; c.shadowBlur = k.sb;
+    c.globalAlpha = k.alpha * e;
+    c.fillText(g.ch, g.x, g.y + (1-e)*14);
+    // 剛出現時的金色光暈
+    if(p < 1 && g.group!=='tail'){
+      c.globalAlpha = (1-e) * 0.8; c.shadowColor = 'rgba(255,215,120,.95)'; c.shadowBlur = 28;
+      c.fillText(g.ch, g.x, g.y + (1-e)*14);
+    }
+  });
+  c.setTransform(1,0,0,1,0,0); c.globalAlpha = 1; c.shadowColor='transparent'; c.shadowBlur=0;
+}
+
+function narrPickMime(){
+  if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  var list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4',
+              'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(var i=0;i<list.length;i++) if(MediaRecorder.isTypeSupported(list[i])) return list[i];
+  return '';
+}
+
+var vidModal = document.getElementById('vid-modal');
+var vidCanvas = document.getElementById('vid-canvas');
+var vidPlayer = document.getElementById('vid-player');
+var vidStatus = document.getElementById('vid-status');
+var vidProg = document.querySelector('#vid-prog div');
+var vidShare = document.getElementById('vid-share');
+var vidDl = document.getElementById('vid-download');
+
+function narrStop(){
+  if(narrRun){
+    narrRun.stopped = true;
+    try{ narrRun.src && narrRun.src.stop(); }catch(e){}
+    try{ narrRun.rec && narrRun.rec.state!=='inactive' && narrRun.rec.stop(); }catch(e){}
+    narrRun = null;
+  }
+}
+
+function narrOpenModal(){
+  narrStop();
+  vidCanvas.style.display = 'block';
+  vidPlayer.style.display = 'none'; vidPlayer.pause(); vidPlayer.removeAttribute('src');
+  vidShare.style.display = 'none'; vidDl.style.display = 'none';
+  vidProg.style.width = '0';
+  vidModal.style.display = 'flex';
+}
+
+// record=false 試聽；record=true 錄成影片
+async function narrStart(record){
+  var ac = narrEnsureAC();            // 一定要在點擊當下
+  narrOpenModal();
+  if(!ac){ vidStatus.textContent = '⚠️ 這個瀏覽器不支援音訊處理'; return; }
+  var mime = record ? narrPickMime() : '';
+  if(record && (!mime || !vidCanvas.captureStream)){
+    vidStatus.textContent = '⚠️ 這個瀏覽器不支援錄製影片，請用 iPhone Safari 或 Chrome 開啟';
+    return;
+  }
+  var text = narrSpeechText();
+  var L = narrCaptureLayers();
+  var vc = vidCanvas.getContext('2d');
+  L.tailT = 1e9;
+  narrRenderFrame(vc, L, 0, 1);
+  vidStatus.textContent = '🎙️ 正在產生旁白…';
+
+  var buf;
+  try{ buf = await narrGetAudio(text); }
+  catch(e){
+    vidStatus.innerHTML = '⚠️ 旁白產生失敗<br><span style="font-size:.62rem;opacity:.7">'+String(e.message||e).slice(0,160)+'</span>';
+    return;
+  }
+  if(vidModal.style.display==='none') return;   // 等待中被關掉
+
+  var A0 = 0.9;
+  var readSign = document.getElementById('narr-sign').checked;
+  var T = narrSchedule(L, A0, buf.duration, readSign);
+  var run = narrRun = { stopped:false };
+
+  var src = ac.createBufferSource(); src.buffer = buf; run.src = src;
+  src.connect(ac.destination);
+  var chunks = [];
+  if(record){
+    var dest = ac.createMediaStreamDestination();
+    src.connect(dest);
+    var stream = vidCanvas.captureStream(30);
+    dest.stream.getAudioTracks().forEach(function(tr){ stream.addTrack(tr); });
+    var rec = new MediaRecorder(stream, { mimeType:mime, videoBitsPerSecond:4000000, audioBitsPerSecond:128000 });
+    run.rec = rec;
+    rec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = function(){
+      stream.getTracks().forEach(function(tr){ tr.stop(); });
+      if(run.stopped && !run.finished) return;
+      narrFinish(new Blob(chunks, { type: mime.split(';')[0] }), mime);
+    };
+    rec.start(250);
+  }
+  var t0 = ac.currentTime + 0.05;
+  src.start(t0 + A0);
+  vidStatus.textContent = record ? '🔴 錄製中，請稍候（約 '+Math.ceil(T)+' 秒）…' : '▶ 試聽中…';
+
+  (function loop(){
+    if(run.stopped) return;
+    var t = ac.currentTime - t0;
+    narrRenderFrame(vc, L, Math.max(0,t), T);
+    vidProg.style.width = Math.min(100, Math.max(0,t)/T*100) + '%';
+    if(t < T){ requestAnimationFrame(loop); return; }
+    run.finished = true;
+    if(record){ vidStatus.textContent = '⏳ 正在完成影片…'; run.rec.stop(); }
+    else vidStatus.textContent = '✅ 試聽結束・滿意的話按「🎬 有聲影片」匯出';
+    narrRun = null;
+  })();
+}
+
+function narrFinish(blob, mime){
+  if(narrBlobUrl){ try{ URL.revokeObjectURL(narrBlobUrl); }catch(e){} }
+  narrBlobUrl = URL.createObjectURL(blob);
+  var ext = mime.indexOf('mp4')>=0 ? 'mp4' : 'webm';
+  var d = new Date();
+  var name = '早安_' + (d.getMonth()+1) + d.getDate() + '_' + d.getHours() + d.getMinutes() + '.' + ext;
+  narrFile = null;
+  try{ narrFile = new File([blob], name, { type: blob.type }); }catch(e){}
+  vidCanvas.style.display = 'none';
+  vidPlayer.src = narrBlobUrl; vidPlayer.style.display = 'block';
+  vidProg.style.width = '100%';
+  var canShare = !!(narrFile && navigator.canShare && navigator.canShare({ files:[narrFile] }));
+  vidShare.style.display = canShare ? 'inline-block' : 'none';
+  vidDl.href = narrBlobUrl; vidDl.download = name; vidDl.style.display = 'inline-block';
+  vidStatus.innerHTML = canShare
+    ? '✅ 影片完成！按「分享到 LINE」<br><span style="font-size:.65rem;opacity:.75">或在分享選單選「儲存影片」存到相簿</span>'
+    : '✅ 影片完成！按「下載影片」後到 LINE 傳送';
+}
+
+vidShare.addEventListener('click', function(){
+  if(!narrFile) return;
+  navigator.share({ files:[narrFile], title:'早安' }).catch(function(){});
+});
+document.getElementById('vid-close').addEventListener('click', function(){
+  narrStop();
+  vidPlayer.pause();
+  vidModal.style.display = 'none';
+});
+document.getElementById('narr-preview-btn').addEventListener('click', function(){ narrStart(false); });
+document.getElementById('narr-export-btn').addEventListener('click', function(){ narrStart(true); });
+document.getElementById('video-btn').addEventListener('click', function(){ narrStart(true); });
 
 // ── Save（iOS 相容版）──
 document.getElementById('save-btn').addEventListener('click',function(){
