@@ -339,6 +339,10 @@ body.elder #video-btn{ font-size:calc(1rem * var(--fs)); padding:18px 6px; }
 }
 .narr-btns button.primary{background:linear-gradient(135deg,#c9a84c,#f0d080,#c9a84c);color:#1a1100;border:none;font-weight:700}
 .narr-note{font-size:.6rem;color:var(--muted);line-height:1.7;margin-top:8px;letter-spacing:.05em}
+.narr-agong{margin:0 0 10px;padding:10px;border:1px dashed rgba(212,168,67,.45);border-radius:10px}
+.narr-agong label{display:block;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:4px}
+.narr-agong .narr-note{margin-top:6px}
+body.elder .narr-agong label{ font-size:calc(.6rem * var(--fs)); }
 body.elder .narr-btns button{ font-size:calc(.8rem * var(--fs)); padding:15px 6px; }
 body.elder .narr-grid label{ font-size:calc(.6rem * var(--fs)); }
 
@@ -690,6 +694,7 @@ body.elder .vid-actions button,body.elder .vid-actions a{ font-size:calc(.85rem 
             <option value="female">曉臻・溫柔女聲</option>
             <option value="female2">曉雨・活潑女聲</option>
             <option value="male">雲哲・沉穩男聲</option>
+            <option value="agong">👴 阿公（AI 聲音）</option>
           </select>
         </div>
         <div>
@@ -701,6 +706,11 @@ body.elder .vid-actions button,body.elder .vid-actions a{ font-size:calc(.85rem 
             <option value="10">輕快</option>
           </select>
         </div>
+      </div>
+      <div id="narr-agong" class="narr-agong" style="display:none">
+        <label>阿公聲音通行碼（和「阿公說故事」App 填的一樣）</label>
+        <input type="text" id="narr-token" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="arcar 沒設 VOICE_TOKEN 就留空">
+        <div class="narr-note" id="narr-agong-msg">用「阿公說故事」App 錄的 AI 聲音念旁白。聲音沒設定好時，會自動改用男聲。</div>
       </div>
       <div class="toggle-row">
         <span>旁白也念出署名</span>
@@ -2209,6 +2219,31 @@ var narrCache = {};         // key → AudioBuffer
 var narrRun = null;         // 目前播放中的動畫
 var narrBlobUrl = '';
 var narrFile = null;
+var narrFallbackNote = '';  // 阿公聲音失敗、改用男聲的原因
+
+// ── 阿公 AI 聲音（arcar /tts voice:"agong"）：記住選的聲音與通行碼 ──
+var NARR_LS = 'gmr_narr';
+function narrAgongMsg(t, warn){
+  var el = document.getElementById('narr-agong-msg');
+  el.textContent = t; el.style.color = warn ? '#e8a24a' : '';
+}
+function narrAgongUI(){
+  document.getElementById('narr-agong').style.display = document.getElementById('narr-voice').value === 'agong' ? 'block' : 'none';
+}
+function narrSavePrefs(){
+  if(!LS_OK) return;
+  try{ localStorage.setItem(NARR_LS, JSON.stringify({ voice:document.getElementById('narr-voice').value, token:document.getElementById('narr-token').value.trim() })); }catch(e){}
+}
+document.getElementById('narr-voice').addEventListener('change', function(){ narrAgongUI(); narrSavePrefs(); });
+document.getElementById('narr-token').addEventListener('change', narrSavePrefs);
+setTimeout(function(){
+  try{
+    var p = LS_OK ? JSON.parse(localStorage.getItem(NARR_LS) || '{}') : {};
+    if(p.voice && document.querySelector('#narr-voice option[value="'+p.voice+'"]')) document.getElementById('narr-voice').value = p.voice;
+    if(p.token) document.getElementById('narr-token').value = p.token;
+  }catch(e){}
+  narrAgongUI();
+}, 0);
 
 function narrEnsureAC(){
   var AC = window.AudioContext || window.webkitAudioContext;
@@ -2246,9 +2281,12 @@ async function narrGetAudio(text){
   var rate = +document.getElementById('narr-rate').value;
   var key = voice+'|'+rate+'|'+text;
   if(narrCache[key]) return narrCache[key];
+  var payload = { text:text, voice:voice, rate:rate };
+  if(voice === 'agong') payload.token = document.getElementById('narr-token').value.trim();
+  narrFallbackNote = '';
   var resp = await fetch(PROXY + '/tts', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ text:text, voice:voice, rate:rate })
+    body: JSON.stringify(payload)
   });
   var ct = resp.headers.get('Content-Type') || '';
   if(!resp.ok || ct.indexOf('json') >= 0){
@@ -2256,8 +2294,21 @@ async function narrGetAudio(text){
     try{ var j = await resp.json(); msg = j.error + (j.detail ? '（'+j.detail.join('；')+'）' : ''); }catch(e){}
     throw new Error(msg);
   }
+  // 選了阿公但 arcar 改用其他聲音（例如還沒設定、通行碼不對）→ 提示原因，這次不快取，下次會再試阿公聲音
+  var engine = resp.headers.get('X-TTS-Engine') || '';
+  var fellBack = voice === 'agong' && engine !== 'agong';
+  if(voice === 'agong'){
+    if(fellBack){
+      var note = ''; try{ note = decodeURIComponent(resp.headers.get('X-TTS-Note') || ''); }catch(e){}
+      note = (note.match(/agong: ([^|]*)/) || [,''])[1].trim();
+      narrFallbackNote = note || '阿公聲音暫時不能用';
+      narrAgongMsg('⚠️ 阿公聲音沒成功（' + narrFallbackNote + '），這次先用男聲。', true);
+    }else{
+      narrAgongMsg('✅ 阿公聲音 OK', false);
+    }
+  }
   var buf = await narrDecode(narrAC, await resp.arrayBuffer());
-  narrCache[key] = buf;
+  if(!fellBack) narrCache[key] = buf;
   return buf;
 }
 
@@ -2450,6 +2501,10 @@ async function narrStart(record){
   catch(e){
     vidStatus.innerHTML = '⚠️ 旁白產生失敗<br><span style="font-size:.62rem;opacity:.7">'+String(e.message||e).slice(0,160)+'</span>';
     return;
+  }
+  if(narrFallbackNote){
+    vidStatus.innerHTML = '⚠️ 阿公聲音沒成功，這次先用男聲<br><span style="font-size:.62rem;opacity:.7">'+narrFallbackNote.replace(/[<>&]/g,'').slice(0,80)+'</span>';
+    await new Promise(function(r){ setTimeout(r, 1800); });
   }
   if(vidModal.style.display==='none') return;   // 等待中被關掉
 
