@@ -509,6 +509,16 @@ body.elder .vid-actions button,body.elder .vid-actions a{ font-size:calc(.85rem 
   display:none;transition:all .15s;
 }
 .erase-trigger:active{background:rgba(0,212,255,.2);}
+/* 照片擺放 */
+.fit-panel{display:none;margin-top:8px;padding:10px;border:1px solid rgba(212,168,67,.25);border-radius:10px;background:rgba(212,168,67,.04)}
+.fit-panel.on{display:block}
+.fit-seg{display:flex;gap:6px}
+.fit-btn{flex:1;padding:9px 0;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:.72rem;letter-spacing:.08em;cursor:pointer}
+.fit-btn.active{background:rgba(212,168,67,.15);border-color:var(--gold);color:var(--gold)}
+.fit-pos{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:.68rem;color:var(--muted)}
+.fit-pos input{flex:1;accent-color:var(--gold);height:28px}
+.fit-hint{margin-top:6px;font-size:.6rem;color:rgba(255,255,255,.35);letter-spacing:.04em}
+body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
 /* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 
@@ -625,6 +635,19 @@ body.elder .vid-actions button,body.elder .vid-actions a{ font-size:calc(.85rem 
       </div>
       <!-- 清除文字觸發 -->
       <button class="erase-trigger" id="erase-trigger-btn">✨ AI 清除此圖文字</button>
+      <!-- 照片擺放：完整顯示 / 填滿裁切 -->
+      <div class="fit-panel" id="fit-panel">
+        <div class="fit-seg" role="group" aria-label="照片擺放方式">
+          <button type="button" class="fit-btn" data-fit="contain">🖼 完整顯示</button>
+          <button type="button" class="fit-btn" data-fit="cover">⛶ 填滿裁切</button>
+        </div>
+        <div class="fit-pos" id="fit-pos-row">
+          <span id="fit-pos-a">上</span>
+          <input type="range" id="fit-pos" min="0" max="100" step="1" value="50" aria-label="保留位置">
+          <span id="fit-pos-b">下</span>
+        </div>
+        <div class="fit-hint" id="fit-hint"></div>
+      </div>
     </div>
   </div>
 
@@ -1346,7 +1369,10 @@ TEMPLATES.forEach((t,i)=>{
     document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
     card.classList.add('active');
     state.tpl=t;state.customBgImg=null;
-    document.getElementById('uploaded-preview').style.display='none';
+    const up=document.getElementById('uploaded-preview');if(up) up.style.display='none';
+    activeUserIdx=-1;
+    document.querySelectorAll('.user-img-card').forEach(c=>c.classList.remove('active'));
+    showEraseTrigger(false);
     draw();
   });
   tplScroll.appendChild(card);
@@ -1454,6 +1480,7 @@ function selectUserImage(idx){
   });
   showEraseTrigger(true);
   draw();
+  updateFitPanel();
 }
 
 function deleteUserImage(idx){
@@ -1610,7 +1637,17 @@ document.getElementById('em-close').addEventListener('click', closeEraser);
 // Show trigger when a user image is selected
 function showEraseTrigger(show){
   eraseTrigger.style.display=show?'block':'none';
+  if(!show&&typeof updateFitPanel==='function') updateFitPanel();
 }
+document.querySelectorAll('.fit-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const o=bgOpts();o.fit=b.getAttribute('data-fit');
+    draw();updateFitPanel();
+  });
+});
+document.getElementById('fit-pos').addEventListener('input',e=>{
+  const o=bgOpts();o.pos=Math.max(0,Math.min(1,e.target.value/100));draw();
+});
 
 eraseTrigger.addEventListener('click',()=>{
   if(activeUserIdx<0||!userImages[activeUserIdx])return;
@@ -2269,6 +2306,52 @@ const canvas=document.getElementById('card-canvas');
 const ctx=canvas.getContext('2d');
 const CW=810,CH=1080;
 
+// ── 上傳照片的擺放設定（每張照片各自記住）──
+function defaultFit(img){
+  const r=img.width/img.height, target=CW/CH;
+  return Math.abs(r-target)/target>0.08?'contain':'cover';
+}
+function bgOpts(){
+  const o=(activeUserIdx>=0&&userImages[activeUserIdx])||null;
+  if(!o) return {fit:'cover',pos:0.5};
+  if(!o.fit) o.fit=defaultFit(state.customBgImg);
+  if(typeof o.pos!=='number') o.pos=0.5;
+  return o;
+}
+// 低解析度縮小再放大＝便宜又相容 iOS 的模糊；每張圖快取一次
+function blurBackdrop(o,img){
+  if(o._blur&&o._blurFor===img) return o._blur;
+  const s1=document.createElement('canvas');s1.width=27;s1.height=36;
+  const c1=s1.getContext('2d');
+  const sc=Math.max(s1.width/img.width,s1.height/img.height);
+  const w=img.width*sc,h=img.height*sc;
+  c1.drawImage(img,(s1.width-w)/2,(s1.height-h)/2,w,h);
+  const s2=document.createElement('canvas');s2.width=108;s2.height=144;
+  const c2=s2.getContext('2d');c2.imageSmoothingEnabled=true;
+  c2.drawImage(s1,0,0,s2.width,s2.height);
+  o._blur=s2;o._blurFor=img;
+  return s2;
+}
+function updateFitPanel(){
+  const panel=document.getElementById('fit-panel');
+  const o=(activeUserIdx>=0&&userImages[activeUserIdx]&&state.customBgImg)?bgOpts():null;
+  panel.classList.toggle('on',!!o);
+  if(!o) return;
+  const img=state.customBgImg, tall=(img.width/img.height)<(CW/CH);
+  document.querySelectorAll('.fit-btn').forEach(b=>{
+    const on=b.getAttribute('data-fit')===o.fit;
+    b.classList.toggle('active',on);b.setAttribute('aria-pressed',on?'true':'false');
+  });
+  const row=document.getElementById('fit-pos-row');
+  row.style.display=o.fit==='cover'?'flex':'none';
+  document.getElementById('fit-pos-a').textContent=tall?'上':'左';
+  document.getElementById('fit-pos-b').textContent=tall?'下':'右';
+  document.getElementById('fit-pos').value=Math.round(o.pos*100);
+  document.getElementById('fit-hint').textContent=o.fit==='contain'
+    ?'整張照片都會顯示，空白處用模糊的同一張照片補滿。'
+    :'照片會填滿卡片，拖動滑桿選擇要保留'+(tall?'上方或下方':'左邊或右邊')+'。';
+}
+
 function draw(){
   drawBackground();
   drawBorder();
@@ -2281,9 +2364,20 @@ function drawBackground(){
   // 1. background
   if(state.customBgImg){
     const img=state.customBgImg;
-    const sc=Math.max(CW/img.width,CH/img.height);
-    const w=img.width*sc,h=img.height*sc;
-    ctx.drawImage(img,(CW-w)/2,(CH-h)/2,w,h);
+    const o=bgOpts();
+    if(o.fit==='contain'){
+      // 完整顯示：先鋪同一張圖的模糊放大版，再把整張圖置中放上
+      ctx.drawImage(blurBackdrop(o,img),0,0,CW,CH);
+      ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,0,CW,CH);
+      const sc=Math.min(CW/img.width,CH/img.height);
+      const w=img.width*sc,h=img.height*sc;
+      ctx.drawImage(img,(CW-w)/2,(CH-h)/2,w,h);
+    } else {
+      // 填滿裁切：依「保留位置」決定裁掉哪一邊（0＝保留上/左，1＝保留下/右）
+      const sc=Math.max(CW/img.width,CH/img.height);
+      const w=img.width*sc,h=img.height*sc;
+      ctx.drawImage(img,(CW-w)*o.pos,(CH-h)*o.pos,w,h);
+    }
     // scrim
     const scrim=ctx.createLinearGradient(0,0,0,CH);
     scrim.addColorStop(0,'rgba(0,0,0,0.12)');scrim.addColorStop(.5,'rgba(0,0,0,0.22)');scrim.addColorStop(1,'rgba(0,0,0,0.5)');

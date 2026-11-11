@@ -2,7 +2,7 @@
 // Cache key: good-morning-v1
 // Strategy: Stale-While-Revalidate (HTML) + Cache-First (assets)
 
-const CACHE_NAME = 'good-morning-v3';
+const CACHE_NAME = 'good-morning-v4';
 const PRECACHE_URLS = [
     "/GMR/index.html",
     "/GMR/sw.js",
