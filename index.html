@@ -81,7 +81,10 @@ main{max-width:480px;margin:0 auto;padding:0 0 130px}
   position:sticky;top:109px;z-index:90;
 }
 .canvas-outer{width:100%;max-width:280px;border-radius:10px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.7);}
-#card-canvas{display:block;width:100%;aspect-ratio:3/4}
+#card-canvas{display:block;width:100%;height:auto;aspect-ratio:810/1080}
+.ratio-btns{grid-template-columns:1fr 1fr 1fr}
+.ratio-btn small{display:block;font-size:.58rem;opacity:.7;letter-spacing:.04em;margin-top:2px}
+.fit-quick{margin-top:8px;width:100%;padding:8px 0;border-radius:8px;border:1px dashed var(--gold);background:transparent;color:var(--gold);font-family:inherit;font-size:.68rem;letter-spacing:.08em;cursor:pointer;display:none}
 
 /* ── SECTIONS ── */
 .panel-section{padding:16px;border-bottom:1px solid var(--border)}
@@ -647,6 +650,7 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
           <span id="fit-pos-b">下</span>
         </div>
         <div class="fit-hint" id="fit-hint"></div>
+        <button type="button" class="fit-quick" id="fit-quick">📱 改用 9:16 長圖卡片，整張照片放滿</button>
       </div>
     </div>
   </div>
@@ -769,6 +773,14 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
     <div class="panel-section">
       <div class="sec-title">🎨 文字顏色</div>
       <div class="color-row" id="color-row"></div>
+    </div>
+    <div class="panel-section">
+      <div class="sec-title">📐 卡片比例</div>
+      <div class="dir-btns ratio-btns" role="group" aria-label="卡片比例">
+        <div class="dir-btn ratio-btn active" data-ratio="3:4">3:4<small>一般直式</small></div>
+        <div class="dir-btn ratio-btn" data-ratio="9:16">9:16<small>長圖・手機全螢幕</small></div>
+        <div class="dir-btn ratio-btn" data-ratio="1:1">1:1<small>方形</small></div>
+      </div>
     </div>
     <div class="panel-section">
       <div class="sec-title">↕ 文字方向</div>
@@ -1641,7 +1653,7 @@ function showEraseTrigger(show){
 }
 document.querySelectorAll('.fit-btn').forEach(b=>{
   b.addEventListener('click',()=>{
-    const o=bgOpts();o.fit=b.getAttribute('data-fit');
+    const o=bgOpts();o.fit=b.getAttribute('data-fit');o.fitAuto=false;
     draw();updateFitPanel();
   });
 });
@@ -2244,9 +2256,9 @@ PLATES.forEach((p,i)=>{
 });
 
 // ── Direction ──
-document.querySelectorAll('.dir-btn').forEach(btn=>{
+document.querySelectorAll('.dir-btn:not(.ratio-btn)').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    document.querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.dir-btn:not(.ratio-btn)').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     state.dir=btn.dataset.dir;
     // 切換方向時重置到合理預設位置
@@ -2304,7 +2316,7 @@ document.querySelectorAll('.step-tab').forEach(tab=>{
 // ═══════════════════════════════════════════
 const canvas=document.getElementById('card-canvas');
 const ctx=canvas.getContext('2d');
-const CW=810,CH=1080;
+const CW=810;let CH=1080; // 寬固定 810；高依卡片比例：3:4=1080、9:16=1440、1:1=810
 
 // ── 上傳照片的擺放設定（每張照片各自記住）──
 function defaultFit(img){
@@ -2314,7 +2326,7 @@ function defaultFit(img){
 function bgOpts(){
   const o=(activeUserIdx>=0&&userImages[activeUserIdx])||null;
   if(!o) return {fit:'cover',pos:0.5};
-  if(!o.fit) o.fit=defaultFit(state.customBgImg);
+  if(!o.fit){o.fit=defaultFit(state.customBgImg);o.fitAuto=true;}
   if(typeof o.pos!=='number') o.pos=0.5;
   return o;
 }
@@ -2334,7 +2346,7 @@ function softBlur(src,sx,sy,sw,sh,dw,dh,steps){
 }
 // 完整顯示的合成圖：每張照片快取一次（拖曳文字時不必重算）
 function containLayer(o,img){
-  if(o._contain&&o._containFor===img) return o._contain;
+  if(o._contain&&o._containFor===img&&o._containCH===CH) return o._contain;
   const out=document.createElement('canvas');out.width=CW;out.height=CH;
   const g=out.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
   const sc=Math.min(CW/img.width,CH/img.height);
@@ -2374,7 +2386,7 @@ function containLayer(o,img){
   fade.addColorStop(1-fr,'rgba(0,0,0,1)');fade.addColorStop(1-fr*0.5,'rgba(0,0,0,0.55)');fade.addColorStop(1,'rgba(0,0,0,0)');
   mg.globalCompositeOperation='destination-in';mg.fillStyle=fade;mg.fillRect(0,0,m.width,m.height);
   g.drawImage(m,x,y,w,h);
-  o._contain=out;o._containFor=img;
+  o._contain=out;o._containFor=img;o._containCH=CH;
   return out;
 }
 function updateFitPanel(){
@@ -2392,9 +2404,45 @@ function updateFitPanel(){
   document.getElementById('fit-pos-a').textContent=tall?'上':'左';
   document.getElementById('fit-pos-b').textContent=tall?'下':'右';
   document.getElementById('fit-pos').value=Math.round(o.pos*100);
+  document.getElementById('fit-quick').style.display=(o.fit==='contain'&&tall&&(img.height/img.width)>1.5&&CH!==1440)?'block':'none';
   document.getElementById('fit-hint').textContent=o.fit==='contain'
     ?'整張照片都會顯示，空白處用模糊的同一張照片補滿。'
     :'照片會填滿卡片，拖動滑桿選擇要保留'+(tall?'上方或下方':'左邊或右邊')+'。';
+}
+
+// ── 卡片比例 ──
+const RATIOS={'3:4':1080,'9:16':1440,'1:1':810};
+let cardRatio='3:4';
+const tplCache={};
+function drawTemplate(c,t){
+  if(CH===1080){t.draw(c);return;}
+  // 內建背景原本畫在 810×1080，其他比例時等比放大覆蓋、置中裁切
+  const key=t.label+'@'+CH;
+  if(!tplCache[key]){
+    const off=document.createElement('canvas');off.width=810;off.height=1080;
+    t.draw(off.getContext('2d'));
+    const out=document.createElement('canvas');out.width=CW;out.height=CH;
+    const sc=Math.max(CW/810,CH/1080),w=810*sc,hh=1080*sc;
+    out.getContext('2d').drawImage(off,(CW-w)/2,(CH-hh)/2,w,hh);
+    tplCache[key]=out;
+  }
+  c.drawImage(tplCache[key],0,0);
+}
+function setRatio(r,silent){
+  if(!RATIOS[r]) r='3:4';
+  cardRatio=r;CH=RATIOS[r];
+  canvas.height=CH;canvas.style.aspectRatio='810/'+CH;
+  // 預覽高度維持和 3:4 差不多，長圖不會把畫面佔滿
+  const outer=canvas.parentNode;
+  outer.style.maxWidth=Math.round(Math.min(280,373*CW/CH))+'px';
+  const vc=document.getElementById('vid-canvas');if(vc){vc.width=CW;vc.height=CH;}
+  // 自動決定的擺放方式依新比例重算；使用者手動選過的保留
+  userImages.forEach(o=>{if(o.fitAuto){delete o.fit;delete o.fitAuto;}});
+  document.querySelectorAll('.ratio-btn').forEach(b=>{
+    const on=b.getAttribute('data-ratio')===r;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on?'true':'false');
+  });
+  try{localStorage.setItem('gmr.ratio',r);}catch(e){}
+  if(!silent){draw();updateFitPanel();if(typeof buildTextOverlay==='function') setTimeout(buildTextOverlay,30);}
 }
 
 function draw(){
@@ -2424,7 +2472,7 @@ function drawBackground(){
     scrim.addColorStop(0,'rgba(0,0,0,0.12)');scrim.addColorStop(.5,'rgba(0,0,0,0.22)');scrim.addColorStop(1,'rgba(0,0,0,0.5)');
     ctx.fillStyle=scrim;ctx.fillRect(0,0,CW,CH);
   } else {
-    state.tpl.draw(ctx);
+    drawTemplate(ctx,state.tpl);
     // overlay scrim
     const scrim=ctx.createLinearGradient(0,0,0,CH);
     scrim.addColorStop(0,'rgba(0,0,0,0.05)');scrim.addColorStop(.5,'rgba(0,0,0,0.18)');scrim.addColorStop(1,'rgba(0,0,0,0.45)');
@@ -2991,7 +3039,7 @@ document.getElementById('save-btn').addEventListener('click',function(){
 
   // 產生高解析度輸出
   var tmp = document.createElement('canvas');
-  tmp.width = 810; tmp.height = 1080;
+  tmp.width = canvas.width; tmp.height = canvas.height;
   tmp.getContext('2d').drawImage(canvas, 0, 0);
 
   overlay.style.opacity = '1';
@@ -3258,6 +3306,16 @@ setTimeout(function(){
   try{ loadGalleryFromLS(); }catch(e){ console.log('init ls err:',e.message); }
 },150);
 
+// 卡片比例：還原上次選的比例，並綁定按鈕
+(function(){
+  let saved='3:4';
+  try{saved=localStorage.getItem('gmr.ratio')||'3:4';}catch(e){}
+  setRatio(saved,true);
+  document.querySelectorAll('.ratio-btn').forEach(b=>{
+    b.addEventListener('click',()=>{setRatio(b.getAttribute('data-ratio'));setTimeout(refreshOverlay,60);});
+  });
+  document.getElementById('fit-quick').addEventListener('click',()=>{setRatio('9:16');setTimeout(refreshOverlay,60);});
+})();
 draw();
 // 初始化 overlay（延遲確保 canvas 已渲染）
 setTimeout(refreshOverlay, 200);
