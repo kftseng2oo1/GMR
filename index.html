@@ -905,6 +905,13 @@ try{
 
 // ── API PROXY (Cloudflare Worker) ──
 const PROXY = 'https://arcar.kftseng2oo1.workers.dev';
+// Claude 模型：claude-sonnet-4-20250514 已於 2026-06-15 退役，改用 Sonnet 5.5
+const AI_MODEL = 'claude-sonnet-5-5';
+// 從 API 回應取出錯誤原因，方便判斷是模型、額度還是 Worker 的問題
+function aiErrMsg(resp,data){
+  const m=data&&data.error&&(data.error.message||data.error.type||(typeof data.error==='string'?data.error:''));
+  return 'HTTP '+resp.status+(m?'：'+String(m).slice(0,120):'');
+}
 
 
 // ═══════════════════════════════════════════
@@ -1644,7 +1651,7 @@ emAnalyzeBtn.addEventListener('click', async()=>{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:AI_MODEL,
         max_tokens:800,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
@@ -1652,7 +1659,9 @@ emAnalyzeBtn.addEventListener('click', async()=>{
         ]}]
       })
     });
-    const data=await resp.json();
+    let data={};
+    try{data=await resp.json();}catch(pe){}
+    if(!resp.ok){emAddLog('⚠️ AI 回應錯誤：'+aiErrMsg(resp,data),'lwrn');}
     const raw=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
     emAddLog('📥 收到回應','linf');
     let parsed;
@@ -2109,23 +2118,24 @@ aiGenBtn.addEventListener('click', async()=>{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:AI_MODEL,
         max_tokens:200,
         messages:[{role:'user',content:prompt}]
       })
     });
-    const data=await resp.json();
+    let data={};
+    try{data=await resp.json();}catch(pe){}
     const txt=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
-    if(txt){
+    if(resp.ok&&txt){
       lastAiText=txt;
       aiResult.className='ai-result';
       aiResult.textContent=txt;
       aiUseBtn.style.display='block';
     } else {
-      aiResult.textContent='⚠️ 生成失敗，請再試一次';
+      aiResult.textContent='⚠️ 生成失敗（'+aiErrMsg(resp,data)+'），請再試一次';
     }
   } catch(e){
-    aiResult.textContent='⚠️ 網路錯誤，請稍後再試';
+    aiResult.textContent='⚠️ 連不上 AI 服務，請確認網路後再試';
   }
   aiGenBtn.classList.remove('loading');
   aiGenBtn.innerHTML='<span class="btn-icon">✨</span> 重新生成';
