@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
- <title>早安卡片 · 產生器</title>
+<title>早安卡片 · 產生器</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -81,10 +79,7 @@ main{max-width:480px;margin:0 auto;padding:0 0 130px}
   position:sticky;top:109px;z-index:90;
 }
 .canvas-outer{width:100%;max-width:280px;border-radius:10px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.7);}
-#card-canvas{display:block;width:100%;height:auto;aspect-ratio:810/1080}
-.ratio-btns{grid-template-columns:1fr 1fr 1fr}
-.ratio-btn small{display:block;font-size:.58rem;opacity:.7;letter-spacing:.04em;margin-top:2px}
-.fit-quick{margin-top:8px;width:100%;padding:8px 0;border-radius:8px;border:1px dashed var(--gold);background:transparent;color:var(--gold);font-family:inherit;font-size:.68rem;letter-spacing:.08em;cursor:pointer;display:none}
+#card-canvas{display:block;width:100%;aspect-ratio:3/4}
 
 /* ── SECTIONS ── */
 .panel-section{padding:16px;border-bottom:1px solid var(--border)}
@@ -127,9 +122,6 @@ main{max-width:480px;margin:0 auto;padding:0 0 130px}
   cursor:pointer;letter-spacing:.08em;transition:all .15s;white-space:nowrap;
 }
 .pcat-btn.active{background:rgba(212,168,67,.15);border-color:var(--gold);color:var(--gold)}
-.motto-sub{margin-top:-4px}
-.motto-sub .pcat-btn{font-size:.66rem;padding:4px 10px}
-.motto-sub .pcat-btn.dice{border-style:dashed}
 .phrase-list{display:flex;flex-direction:column;gap:7px;max-height:220px;overflow-y:auto;padding-right:2px;}
 .phrase-item{
   padding:12px 14px;
@@ -324,51 +316,6 @@ input[type=range]::-webkit-slider-thumb{
 }
 #save-btn:active{opacity:.85;transform:scale(.97)}
 .save-hint{font-size:.6rem;color:var(--muted);letter-spacing:.1em;text-align:center;margin-top:4px}
-.save-row{display:flex;gap:8px}
-.save-row #save-btn{flex:1.4;letter-spacing:.12em}
-#video-btn{
-  flex:1;padding:16px 8px;border-radius:12px;cursor:pointer;
-  background:rgba(212,168,67,.1);border:1px solid var(--gold);color:var(--gold2);
-  font-family:'Hiragino Mincho ProN','PingFang TC',serif;font-size:1rem;font-weight:700;letter-spacing:.08em;
-  transition:opacity .2s,transform .15s;
-}
-#video-btn:active{opacity:.85;transform:scale(.97)}
-body.elder #video-btn{ font-size:calc(1rem * var(--fs)); padding:18px 6px; }
-
-/* ── 動畫旁白 ── */
-.narr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.narr-grid label{display:block;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:4px}
-.narr-btns{display:flex;gap:8px;margin-top:10px}
-.narr-btns button{
-  flex:1;padding:12px 6px;border-radius:10px;cursor:pointer;font-size:.8rem;letter-spacing:.1em;
-  border:1px solid rgba(212,168,67,.45);background:rgba(212,168,67,.08);color:var(--gold2);
-}
-.narr-btns button.primary{background:linear-gradient(135deg,#c9a84c,#f0d080,#c9a84c);color:#1a1100;border:none;font-weight:700}
-.narr-note{font-size:.6rem;color:var(--muted);line-height:1.7;margin-top:8px;letter-spacing:.05em}
-.narr-agong{margin:0 0 10px;padding:10px;border:1px dashed rgba(212,168,67,.45);border-radius:10px}
-.narr-agong label{display:block;font-size:.6rem;color:var(--muted);letter-spacing:.1em;margin-bottom:4px}
-.narr-agong .narr-note{margin-top:6px}
-body.elder .narr-agong label{ font-size:calc(.6rem * var(--fs)); }
-body.elder .narr-btns button{ font-size:calc(.8rem * var(--fs)); padding:15px 6px; }
-body.elder .narr-grid label{ font-size:calc(.6rem * var(--fs)); }
-
-#vid-modal{
-  display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.94);
-  flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 16px;
-}
-#vid-modal canvas,#vid-modal video{
-  max-width:86vw;max-height:62vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;background:#000;
-}
-#vid-status{font-size:.78rem;color:#fff;letter-spacing:.08em;text-align:center;line-height:1.8;min-height:1.4em}
-#vid-prog{width:min(86vw,360px);height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden}
-#vid-prog div{height:100%;width:0;background:var(--gold);transition:width .1s linear}
-.vid-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.vid-actions button,.vid-actions a{
-  padding:12px 20px;border-radius:10px;font-size:.85rem;letter-spacing:.1em;cursor:pointer;text-decoration:none;
-  border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;
-}
-.vid-actions .primary{background:linear-gradient(135deg,#c9a84c,#f0d080,#c9a84c);color:#1a1100;border:none;font-weight:700}
-body.elder .vid-actions button,body.elder .vid-actions a{ font-size:calc(.85rem * var(--fs)); padding:15px 22px; }
 
 /* ── PANES ── */
 .step-pane{display:none}
@@ -512,16 +459,6 @@ body.elder .vid-actions button,body.elder .vid-actions a{ font-size:calc(.85rem 
   display:none;transition:all .15s;
 }
 .erase-trigger:active{background:rgba(0,212,255,.2);}
-/* 照片擺放 */
-.fit-panel{display:none;margin-top:8px;padding:10px;border:1px solid rgba(212,168,67,.25);border-radius:10px;background:rgba(212,168,67,.04)}
-.fit-panel.on{display:block}
-.fit-seg{display:flex;gap:6px}
-.fit-btn{flex:1;padding:9px 0;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:.72rem;letter-spacing:.08em;cursor:pointer}
-.fit-btn.active{background:rgba(212,168,67,.15);border-color:var(--gold);color:var(--gold)}
-.fit-pos{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:.68rem;color:var(--muted)}
-.fit-pos input{flex:1;accent-color:var(--gold);height:28px}
-.fit-hint{margin-top:6px;font-size:.6rem;color:rgba(255,255,255,.35);letter-spacing:.04em}
-body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
 /* scrollbar */
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 
@@ -638,20 +575,6 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
       </div>
       <!-- 清除文字觸發 -->
       <button class="erase-trigger" id="erase-trigger-btn">✨ AI 清除此圖文字</button>
-      <!-- 照片擺放：完整顯示 / 填滿裁切 -->
-      <div class="fit-panel" id="fit-panel">
-        <div class="fit-seg" role="group" aria-label="照片擺放方式">
-          <button type="button" class="fit-btn" data-fit="contain">🖼 完整顯示</button>
-          <button type="button" class="fit-btn" data-fit="cover">⛶ 填滿裁切</button>
-        </div>
-        <div class="fit-pos" id="fit-pos-row">
-          <span id="fit-pos-a">上</span>
-          <input type="range" id="fit-pos" min="0" max="100" step="1" value="50" aria-label="保留位置">
-          <span id="fit-pos-b">下</span>
-        </div>
-        <div class="fit-hint" id="fit-hint"></div>
-        <button type="button" class="fit-quick" id="fit-quick">📱 改用 9:16 長圖卡片，整張照片放滿</button>
-      </div>
     </div>
   </div>
 
@@ -692,7 +615,6 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
     <div class="panel-section">
       <div class="sec-title">📚 常用語句快選</div>
       <div class="phrase-cats" id="phrase-cats"></div>
-      <div class="phrase-cats motto-sub" id="motto-sub" hidden></div>
       <div class="phrase-list pinch-zone" id="phrase-list"></div>
     </div>
   </div>
@@ -716,43 +638,6 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
         </div>
       </div>
     </div>
-    <div class="panel-section">
-      <div class="sec-title">🔊 動畫旁白（有聲影片）</div>
-      <div class="narr-grid">
-        <div>
-          <label>聲音</label>
-          <select id="narr-voice">
-            <option value="female">曉臻・溫柔女聲</option>
-            <option value="female2">曉雨・活潑女聲</option>
-            <option value="male">雲哲・沉穩男聲</option>
-            <option value="agong">👴 阿公（AI 聲音）</option>
-          </select>
-        </div>
-        <div>
-          <label>語速</label>
-          <select id="narr-rate">
-            <option value="-20">慢慢念</option>
-            <option value="-8" selected>稍慢</option>
-            <option value="0">正常</option>
-            <option value="10">輕快</option>
-          </select>
-        </div>
-      </div>
-      <div id="narr-agong" class="narr-agong" style="display:none">
-        <label>阿公聲音通行碼（和「阿公說故事」App 填的一樣）</label>
-        <input type="text" id="narr-token" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="arcar 沒設 VOICE_TOKEN 就留空">
-        <div class="narr-note" id="narr-agong-msg">用「阿公說故事」App 錄的 AI 聲音念旁白。聲音沒設定好時，會自動改用男聲。</div>
-      </div>
-      <div class="toggle-row">
-        <span>旁白也念出署名</span>
-        <label class="toggle"><input type="checkbox" id="narr-sign" checked><span class="knob"></span></label>
-      </div>
-      <div class="narr-btns">
-        <button id="narr-preview-btn">▶ 試聽動畫</button>
-        <button id="narr-export-btn" class="primary">🎬 匯出影片</button>
-      </div>
-      <div class="narr-note">文字會隨旁白一個字一個字浮現，匯出 MP4 後可直接分享到 LINE。</div>
-    </div>
   </div>
 
   <!-- STEP 4 : 排版 -->
@@ -773,14 +658,6 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
     <div class="panel-section">
       <div class="sec-title">🎨 文字顏色</div>
       <div class="color-row" id="color-row"></div>
-    </div>
-    <div class="panel-section">
-      <div class="sec-title">📐 卡片比例</div>
-      <div class="dir-btns ratio-btns" role="group" aria-label="卡片比例">
-        <div class="dir-btn ratio-btn active" data-ratio="3:4">3:4<small>一般直式</small></div>
-        <div class="dir-btn ratio-btn" data-ratio="9:16">9:16<small>長圖・手機全螢幕</small></div>
-        <div class="dir-btn ratio-btn" data-ratio="1:1">1:1<small>方形</small></div>
-      </div>
     </div>
     <div class="panel-section">
       <div class="sec-title">↕ 文字方向</div>
@@ -820,11 +697,8 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
 
 <div class="save-bar">
   <div class="max-wrap">
-    <div class="save-row">
-      <button id="save-btn">📥 儲存圖片</button>
-      <button id="video-btn">🎬 有聲影片</button>
-    </div>
-    <p class="save-hint">圖片：長按儲存到相片｜影片：文字隨旁白浮現，可直接分享到 LINE</p>
+    <button id="save-btn">📥 儲存圖片 → 傳至 LINE</button>
+    <p class="save-hint">點擊後長按圖片 → 選「儲存到相片」→ 分享到 LINE</p>
   </div>
 </div>
 
@@ -848,19 +722,6 @@ body.elder .fit-btn{font-size:calc(.72rem * var(--fs))}
     background:rgba(255,255,255,.1);color:#fff;font-size:.85rem;
     letter-spacing:.12em;cursor:pointer;
   ">✕ 關閉</button>
-</div>
-
-<!-- ── 有聲影片 Modal ── -->
-<div id="vid-modal">
-  <div id="vid-status">準備中…</div>
-  <canvas id="vid-canvas" width="810" height="1080"></canvas>
-  <video id="vid-player" playsinline controls style="display:none"></video>
-  <div id="vid-prog"><div></div></div>
-  <div class="vid-actions" id="vid-actions">
-    <button id="vid-share" class="primary" style="display:none">📤 分享到 LINE</button>
-    <a id="vid-download" style="display:none">💾 下載影片</a>
-    <button id="vid-close">✕ 關閉</button>
-  </div>
 </div>
 
 <!-- ── 縮放提示 Badge ── -->
@@ -940,13 +801,6 @@ try{
 
 // ── API PROXY (Cloudflare Worker) ──
 const PROXY = 'https://arcar.kftseng2oo1.workers.dev';
-// Claude 模型：claude-sonnet-4-20250514 已於 2026-06-15 退役，改用 Sonnet 5.5
-const AI_MODEL = 'claude-sonnet-5-5';
-// 從 API 回應取出錯誤原因，方便判斷是模型、額度還是 Worker 的問題
-function aiErrMsg(resp,data){
-  const m=data&&data.error&&(data.error.message||data.error.type||(typeof data.error==='string'?data.error:''));
-  return 'HTTP '+resp.status+(m?'：'+String(m).slice(0,120):'');
-}
 
 
 // ═══════════════════════════════════════════
@@ -1076,218 +930,6 @@ const TEXT_COLORS = [
   {c:'#2c1810',l:'深棕'},{c:'#1a1a1a',l:'墨黑'},
 ];
 
-// 座右銘：同步自「每日座右銘」App（kftseng2oo1/idom），[句子, 出處, 分類]
-const MOTTOS = [
-  ['天行健，君子以自強不息。','《周易．乾．象傳》','立志'],
-  ['地勢坤，君子以厚德載物。','《周易．坤．象傳》','修身'],
-  ['千里之行，始於足下。','《老子》第六十四章','立志'],
-  ['知人者智，自知者明。','《老子》第三十三章','智慧'],
-  ['勝人者有力，自勝者強。','《老子》第三十三章','修身'],
-  ['上善若水。','《老子》第八章','處世'],
-  ['天下難事，必作於易；天下大事，必作於細。','《老子》第六十三章','智慧'],
-  ['合抱之木，生於毫末；九層之臺，起於累土。','《老子》第六十四章','堅毅'],
-  ['禍兮福之所倚，福兮禍之所伏。','《老子》第五十八章','智慧'],
-  ['大器晚成。','《老子》第四十一章','堅毅'],
-  ['學而不思則罔，思而不學則殆。','《論語》','勤學'],
-  ['三人行，必有我師焉。','《論語》','勤學'],
-  ['己所不欲，勿施於人。','《論語》','處世'],
-  ['知之為知之，不知為不知，是知也。','《論語》','勤學'],
-  ['歲寒，然後知松柏之後凋也。','《論語》','堅毅'],
-  ['過而不改，是謂過矣。','《論語》','修身'],
-  ['工欲善其事，必先利其器。','《論語》','智慧'],
-  ['人無遠慮，必有近憂。','《論語》','智慧'],
-  ['三軍可奪帥也，匹夫不可奪志也。','《論語》','立志'],
-  ['見賢思齊焉，見不賢而內自省也。','《論語》','修身'],
-  ['吾日三省吾身。','曾子．《論語》','修身'],
-  ['君子欲訥於言而敏於行。','《論語》','修身'],
-  ['欲速則不達。','《論語》','智慧'],
-  ['溫故而知新。','《論語》','勤學'],
-  ['敏而好學，不恥下問。','《論語》','勤學'],
-  ['君子坦蕩蕩，小人長戚戚。','《論語》','處世'],
-  ['不患人之不己知，患不知人也。','《論語》','處世'],
-  ['生於憂患，死於安樂。','《孟子》','堅毅'],
-  ['窮則獨善其身，達則兼善天下。','《孟子》','處世'],
-  ['富貴不能淫，貧賤不能移，威武不能屈。','《孟子》','立志'],
-  ['不積跬步，無以至千里；不積小流，無以成江海。','《荀子．勸學》','堅毅'],
-  ['鍥而不舍，金石可鏤。','《荀子．勸學》','堅毅'],
-  ['志不強者智不達。','《墨子．修身》','立志'],
-  ['博學之，審問之，慎思之，明辨之，篤行之。','《中庸》','勤學'],
-  ['苟日新，日日新，又日新。','《大學》','修身'],
-  ['滿招損，謙受益。','《尚書．大禹謨》','修身'],
-  ['行百里者半九十。','《戰國策》','堅毅'],
-  ['路漫漫其修遠兮，吾將上下而求索。','屈原《離騷》','立志'],
-  ['燕雀安知鴻鵠之志。','《史記．陳涉世家》','立志'],
-  ['桃李不言，下自成蹊。','《史記》','處世'],
-  ['有志者事竟成。','《後漢書．耿弇傳》','立志'],
-  ['失之東隅，收之桑榆。','《後漢書．馮異傳》','智慧'],
-  ['少壯不努力，老大徒傷悲。','漢樂府《長歌行》','惜時'],
-  ['非淡泊無以明志，非寧靜無以致遠。','諸葛亮《誡子書》','修身'],
-  ['靜以修身，儉以養德。','諸葛亮《誡子書》','修身'],
-  ['勿以惡小而為之，勿以善小而不為。','劉備《遺詔》','修身'],
-  ['老驥伏櫪，志在千里；烈士暮年，壯心不已。','曹操《龜雖壽》','立志'],
-  ['盛年不重來，一日難再晨。及時當勉勵，歲月不待人。','陶淵明《雜詩》','惜時'],
-  ['長風破浪會有時，直掛雲帆濟滄海。','李白《行路難》','立志'],
-  ['天生我材必有用。','李白《將進酒》','立志'],
-  ['會當凌絕頂，一覽眾山小。','杜甫《望嶽》','立志'],
-  ['讀書破萬卷，下筆如有神。','杜甫《奉贈韋左丞丈二十二韻》','勤學'],
-  ['欲窮千里目，更上一層樓。','王之渙《登鸛雀樓》','立志'],
-  ['黑髮不知勤學早，白首方悔讀書遲。','相傳顏真卿《勸學》','惜時'],
-  ['業精於勤，荒於嬉；行成於思，毀於隨。','韓愈《進學解》','勤學'],
-  ['千淘萬漉雖辛苦，吹盡狂沙始到金。','劉禹錫《浪淘沙》','堅毅'],
-  ['先天下之憂而憂，後天下之樂而樂。','范仲淹《岳陽樓記》','處世'],
-  ['不以物喜，不以己悲。','范仲淹《岳陽樓記》','修身'],
-  ['不畏浮雲遮望眼，自緣身在最高層。','王安石《登飛來峰》','智慧'],
-  ['古之立大事者，不惟有超世之才，亦必有堅忍不拔之志。','蘇軾《晁錯論》','堅毅'],
-  ['博觀而約取，厚積而薄發。','蘇軾《稼說送張琥》','勤學'],
-  ['竹杖芒鞋輕勝馬，誰怕？一蓑煙雨任平生。','蘇軾《定風波》','處世'],
-  ['紙上得來終覺淺，絕知此事要躬行。','陸游《冬夜讀書示子聿》','勤學'],
-  ['山重水複疑無路，柳暗花明又一村。','陸游《遊山西村》','堅毅'],
-  ['問渠那得清如許，為有源頭活水來。','朱熹《觀書有感》','勤學'],
-  ['人生自古誰無死，留取丹心照汗青。','文天祥《過零丁洋》','立志'],
-  ['繩鋸木斷，水滴石穿。','羅大經《鶴林玉露》','堅毅'],
-  ['知行合一。','王陽明《傳習錄》','修身'],
-  ['明日復明日，明日何其多。我生待明日，萬事成蹉跎。','錢福《明日歌》','惜時'],
-  ['千磨萬擊還堅勁，任爾東西南北風。','鄭板橋《竹石》','堅毅'],
-  ['天下事有難易乎？為之，則難者亦易矣。','彭端淑《為學》','立志'],
-  ['海納百川，有容乃大；壁立千仞，無欲則剛。','林則徐','處世'],
-  ['一寸光陰一寸金，寸金難買寸光陰。','《增廣賢文》','惜時'],
-  ['書山有路勤為徑，學海無涯苦作舟。','古訓','勤學'],
-  ['寶劍鋒從磨礪出，梅花香自苦寒來。','古訓','堅毅'],
-  ['認識你自己。','德爾斐神殿箴言','智慧'],
-  ['未經審視的人生不值得活。','蘇格拉底','智慧'],
-  ['人不能兩次踏進同一條河流。','赫拉克利特','智慧'],
-  ['活到老，學到老。','梭倫','勤學'],
-  ['習慣是第二天性。','西塞羅','修身'],
-  ['把握今日。','賀拉斯','惜時'],
-  ['命運眷顧勇者。','維吉爾','立志'],
-  ['知識就是力量。','培根','勤學'],
-  ['我思故我在。','笛卡兒','智慧'],
-  ['人是一根會思考的蘆葦。','帕斯卡','智慧'],
-  ['忍耐是苦的，果實卻是甜的。','盧梭《愛彌兒》','堅毅'],
-  ['時間就是金錢。','富蘭克林','惜時'],
-  ['今天能做的事，不要留到明天。','富蘭克林','惜時'],
-  ['冬天來了，春天還會遠嗎？','雪萊《西風頌》','堅毅'],
-  ['凡殺不死我的，使我更強大。','尼采','堅毅'],
-  ['天才是百分之一的靈感，加上百分之九十九的汗水。','愛迪生','勤學'],
-  ['羅馬不是一天造成的。','西方諺語','堅毅'],
-  ['學而時習之，不亦說乎？','《論語》','勤學'],
-  ['知者不惑，仁者不憂，勇者不懼。','《論語》','修身'],
-  ['逝者如斯夫，不舍晝夜。','《論語》','惜時'],
-  ['德不孤，必有鄰。','《論語》','處世'],
-  ['君子和而不同，小人同而不和。','《論語》','處世'],
-  ['君子成人之美，不成人之惡。','《論語》','處世'],
-  ['其身正，不令而行。','《論語》','修身'],
-  ['小不忍則亂大謀。','《論語》','智慧'],
-  ['道不同，不相為謀。','《論語》','處世'],
-  ['當仁不讓於師。','《論語》','立志'],
-  ['朝聞道，夕死可矣。','《論語》','立志'],
-  ['人而無信，不知其可也。','《論語》','修身'],
-  ['知之者不如好之者，好之者不如樂之者。','《論語》','勤學'],
-  ['躬自厚而薄責於人。','《論語》','處世'],
-  ['往者不可諫，來者猶可追。','《論語》','惜時'],
-  ['後生可畏，焉知來者之不如今也？','《論語》','立志'],
-  ['言必信，行必果。','《論語》','修身'],
-  ['發憤忘食，樂以忘憂。','《論語》','勤學'],
-  ['學而不厭，誨人不倦。','《論語》','勤學'],
-  ['君子求諸己，小人求諸人。','《論語》','修身'],
-  ['過猶不及。','《論語》','智慧'],
-  ['見義不為，無勇也。','《論語》','立志'],
-  ['天將降大任於是人也，必先苦其心志，勞其筋骨。','《孟子》','堅毅'],
-  ['得道者多助，失道者寡助。','《孟子》','處世'],
-  ['老吾老，以及人之老；幼吾幼，以及人之幼。','《孟子》','處世'],
-  ['盡信書，則不如無書。','《孟子》','勤學'],
-  ['不以規矩，不能成方圓。','《孟子》','智慧'],
-  ['愛人者，人恆愛之；敬人者，人恆敬之。','《孟子》','處世'],
-  ['雖千萬人，吾往矣。','《孟子》','立志'],
-  ['人有不為也，而後可以有為。','《孟子》','智慧'],
-  ['養心莫善於寡欲。','《孟子》','修身'],
-  ['仰不愧於天，俯不怍於人。','《孟子》','修身'],
-  ['天時不如地利，地利不如人和。','《孟子》','處世'],
-  ['權，然後知輕重；度，然後知長短。','《孟子》','智慧'],
-  ['知止而後有定，定而後能靜。','《大學》','修身'],
-  ['富潤屋，德潤身。','《大學》','修身'],
-  ['心不在焉，視而不見，聽而不聞。','《大學》','勤學'],
-  ['凡事豫則立，不豫則廢。','《中庸》','智慧'],
-  ['人一能之，己百之；人十能之，己千之。','《中庸》','堅毅'],
-  ['好學近乎知，力行近乎仁，知恥近乎勇。','《中庸》','修身'],
-  ['行遠必自邇，登高必自卑。','《中庸》','堅毅'],
-  ['路遙知馬力，日久見人心。','《增廣賢文》','處世'],
-  ['近水知魚性，近山識鳥音。','《增廣賢文》','智慧'],
-  ['讀書須用意，一字值千金。','《增廣賢文》','勤學'],
-  ['有意栽花花不發，無心插柳柳成蔭。','《增廣賢文》','智慧'],
-  ['寧可人負我，切莫我負人。','《增廣賢文》','處世'],
-  ['長江後浪推前浪，世上新人趕舊人。','《增廣賢文》','立志'],
-  ['莫道君行早，更有早行人。','《增廣賢文》','勤學'],
-  ['欲求生富貴，須下死工夫。','《增廣賢文》','堅毅'],
-  ['知己知彼，將心比心。','《增廣賢文》','處世'],
-  ['一年之計在於春，一日之計在於寅。','《增廣賢文》','惜時'],
-  ['一粥一飯，當思來處不易；半絲半縷，恆念物力維艱。','《朱子家訓》','修身'],
-  ['宜未雨而綢繆，毋臨渴而掘井。','《朱子家訓》','智慧'],
-  ['施惠無念，受恩莫忘。','《朱子家訓》','處世'],
-  ['凡事當留餘地，得意不宜再往。','《朱子家訓》','處世'],
-  ['善欲人見，不是真善；惡恐人知，便是大惡。','《朱子家訓》','修身'],
-  ['勿自暴，勿自棄；聖與賢，可馴致。','《弟子規》','立志'],
-  ['過能改，歸於無。','《弟子規》','修身'],
-  ['凡出言，信為先。','《弟子規》','修身'],
-  ['寬為限，緊用功；工夫到，滯塞通。','《弟子規》','勤學'],
-  ['玉不琢，不成器。','《三字經》','勤學'],
-  ['勤有功，戲無益。','《三字經》','勤學'],
-  ['尺璧非寶，寸陰是競。','《千字文》','惜時'],
-  ['律己宜帶秋氣，處世宜帶春氣。','張潮《幽夢影》','處世'],
-  ['能閒世人之所忙者，方能忙世人之所閒。','張潮《幽夢影》','智慧'],
-  ['人須求可入詩，物須求可入畫。','張潮《幽夢影》','修身'],
-  ['傲骨不可無，傲心不可有。','張潮《幽夢影》','修身'],
-  ['山不在高，有仙則名；水不在深，有龍則靈。','劉禹錫《陋室銘》','修身'],
-  ['聞道有先後，術業有專攻。','韓愈《師說》','勤學'],
-  ['窮且益堅，不墜青雲之志。','王勃《滕王閣序》','立志'],
-  ['老當益壯，寧移白首之心？','王勃《滕王閣序》','立志'],
-  ['不戚戚於貧賤，不汲汲於富貴。','陶淵明《五柳先生傳》','修身'],
-  ['人固有一死，或重於泰山，或輕於鴻毛。','司馬遷《報任安書》','立志'],
-  ['居安思危，戒奢以儉。','魏徵《諫太宗十思疏》','智慧'],
-  ['沉舟側畔千帆過，病樹前頭萬木春。','劉禹錫《酬樂天揚州初逢席上見贈》','堅毅'],
-  ['莫道桑榆晚，為霞尚滿天。','劉禹錫《酬樂天詠老見示》','立志'],
-  ['勸君莫惜金縷衣，勸君惜取少年時。','《金縷衣》','惜時'],
-  ['海內存知己，天涯若比鄰。','王勃《送杜少府之任蜀州》','處世'],
-  ['莫愁前路無知己，天下誰人不識君。','高適《別董大》','處世'],
-  ['時人不識凌雲木，直待凌雲始道高。','杜荀鶴《小松》','立志'],
-  ['少年辛苦終身事，莫向光陰惰寸功。','杜荀鶴《題弟侄書堂》','惜時'],
-  ['仰天大笑出門去，我輩豈是蓬蒿人。','李白《南陵別兒童入京》','立志'],
-  ['大鵬一日同風起，扶搖直上九萬里。','李白《上李邕》','立志'],
-  ['黃沙百戰穿金甲，不破樓蘭終不還。','王昌齡《從軍行》','堅毅'],
-  ['疾風知勁草，板蕩識誠臣。','李世民《賜蕭瑀》','堅毅'],
-  ['古人學問無遺力，少壯工夫老始成。','陸游《冬夜讀書示子聿》','勤學'],
-  ['位卑未敢忘憂國。','陸游《病起書懷》','立志'],
-  ['粗繒大布裹生涯，腹有詩書氣自華。','蘇軾《和董傳留別》','勤學'],
-  ['不識廬山真面目，只緣身在此山中。','蘇軾《題西林壁》','智慧'],
-  ['回首向來蕭瑟處，歸去，也無風雨也無晴。','蘇軾《定風波》','處世'],
-  ['此心安處是吾鄉。','蘇軾《定風波》','修身'],
-  ['人間有味是清歡。','蘇軾《浣溪沙》','修身'],
-  ['誰道人生無再少？門前流水尚能西！','蘇軾《浣溪沙》','立志'],
-  ['人有悲歡離合，月有陰晴圓缺，此事古難全。','蘇軾《水調歌頭》','智慧'],
-  ['一點浩然氣，千里快哉風。','蘇軾《水調歌頭》','修身'],
-  ['臣心一片磁針石，不指南方不肯休。','文天祥《揚子江》','立志'],
-  ['梅須遜雪三分白，雪卻輸梅一段香。','盧梅坡《雪梅》','智慧'],
-  ['莫等閒，白了少年頭，空悲切。','岳飛《滿江紅》','惜時'],
-  ['他山之石，可以攻玉。','《詩經．小雅．鶴鳴》','勤學'],
-  ['如切如磋，如琢如磨。','《詩經．衛風．淇奧》','修身'],
-  ['靡不有初，鮮克有終。','《詩經．大雅．蕩》','堅毅'],
-  ['高山仰止，景行行止。','《詩經．小雅．車舝》','立志'],
-  ['投我以木桃，報之以瓊瑤。','《詩經．衛風．木瓜》','處世'],
-  ['亦余心之所善兮，雖九死其猶未悔。','屈原《離騷》','立志'],
-  ['尺有所短，寸有所長。','屈原《卜居》','智慧'],
-  ['山不厭高，海不厭深。周公吐哺，天下歸心。','曹操《短歌行》','處世'],
-  ['師者，所以傳道受業解惑也。','韓愈《師說》','勤學'],
-  ['世有伯樂，然後有千里馬。','韓愈《雜說四》','智慧'],
-  ['憂勞可以興國，逸豫可以亡身。','歐陽修《伶官傳序》','修身'],
-  ['禍患常積於忽微，而智勇多困於所溺。','歐陽修《伶官傳序》','智慧'],
-  ['苟非吾之所有，雖一毫而莫取。','蘇軾《前赤壁賦》','修身'],
-  ['親賢臣，遠小人，此先漢所以興隆也。','諸葛亮《出師表》','處世'],
-  ['鞠躬盡瘁，死而後已。','諸葛亮《後出師表》','堅毅'],
-  ['不患寡而患不均。','《論語》','處世'],
-  ['敬其事而後其食。','《論語》','勤學']
-];
-const MOTTO_CATS = ['全部','立志','勤學','修身','處世','惜時','堅毅','智慧'];
-
 const PHRASES = {
   '早安問候':[
     {t:'早安！願你今天充滿陽光，笑口常開！'},
@@ -1304,7 +946,16 @@ const PHRASES = {
     {t:'心若安定，處處是晴天。願你日日平安。'},
     {t:'願你此刻安好，往後的每一天也都如此。'},
   ],
-  '座右銘':[],
+  '勵志名言':[
+    {t:'千里之行，始於足下。', s:'老子'},
+    {t:'不積跬步，無以至千里；不積小流，無以成江海。', s:'荀子'},
+    {t:'寶劍鋒從磨礪出，梅花香自苦寒來。', s:'古諺'},
+    {t:'路漫漫其修遠兮，吾將上下而求索。', s:'屈原'},
+    {t:'業精於勤，荒於嬉；行成於思，毀於隨。', s:'韓愈'},
+    {t:'天下事有難易乎？為之，則難者亦易矣。', s:'彭端淑'},
+    {t:'志不強者智不達。', s:'墨子'},
+    {t:'知之者不如好之者，好之者不如樂之者。', s:'孔子'},
+  ],
   '人生哲理':[
     {t:'人生就像一杯茶，不會苦一輩子，但總會苦一陣子。', s:''},
     {t:'你若盛開，蝴蝶自來；你若精彩，天自安排。', s:''},
@@ -1381,10 +1032,7 @@ TEMPLATES.forEach((t,i)=>{
     document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
     card.classList.add('active');
     state.tpl=t;state.customBgImg=null;
-    const up=document.getElementById('uploaded-preview');if(up) up.style.display='none';
-    activeUserIdx=-1;
-    document.querySelectorAll('.user-img-card').forEach(c=>c.classList.remove('active'));
-    showEraseTrigger(false);
+    document.getElementById('uploaded-preview').style.display='none';
     draw();
   });
   tplScroll.appendChild(card);
@@ -1492,7 +1140,6 @@ function selectUserImage(idx){
   });
   showEraseTrigger(true);
   draw();
-  updateFitPanel();
 }
 
 function deleteUserImage(idx){
@@ -1649,17 +1296,7 @@ document.getElementById('em-close').addEventListener('click', closeEraser);
 // Show trigger when a user image is selected
 function showEraseTrigger(show){
   eraseTrigger.style.display=show?'block':'none';
-  if(!show&&typeof updateFitPanel==='function') updateFitPanel();
 }
-document.querySelectorAll('.fit-btn').forEach(b=>{
-  b.addEventListener('click',()=>{
-    const o=bgOpts();o.fit=b.getAttribute('data-fit');o.fitAuto=false;
-    draw();updateFitPanel();
-  });
-});
-document.getElementById('fit-pos').addEventListener('input',e=>{
-  const o=bgOpts();o.pos=Math.max(0,Math.min(1,e.target.value/100));draw();
-});
 
 eraseTrigger.addEventListener('click',()=>{
   if(activeUserIdx<0||!userImages[activeUserIdx])return;
@@ -1700,7 +1337,7 @@ emAnalyzeBtn.addEventListener('click', async()=>{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:AI_MODEL,
+        model:'claude-sonnet-4-20250514',
         max_tokens:800,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
@@ -1708,9 +1345,7 @@ emAnalyzeBtn.addEventListener('click', async()=>{
         ]}]
       })
     });
-    let data={};
-    try{data=await resp.json();}catch(pe){}
-    if(!resp.ok){emAddLog('⚠️ AI 回應錯誤：'+aiErrMsg(resp,data),'lwrn');}
+    const data=await resp.json();
     const raw=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
     emAddLog('📥 收到回應','linf');
     let parsed;
@@ -2069,58 +1704,8 @@ function emMeanFill(id,W,H,rx,ry,rw,rh){
 // ── Phrase library ──
 const phraseCatsEl=document.getElementById('phrase-cats');
 const phraseListEl=document.getElementById('phrase-list');
-const mottoSubEl=document.getElementById('motto-sub');
-let mottoCat='全部';
-// 卡片上用短出處：書名只留書名（《周易．乾．象傳》→《周易》），詩文只留作者（劉禹錫《…》→劉禹錫）
-function shortSrc(s){
-  if(!s) return '';
-  if(s.charAt(0)==='《'){const t=s.slice(1,s.indexOf('》'));return '《'+t.split('．')[0]+'》';}
-  const i=s.indexOf('《');
-  return i>0?s.slice(0,i):s;
-}
-function applyMotto(m){
-  // 橫排在下一行附上出處；直排會併掉換行，只放句子
-  let text=m[0];
-  if(state.dir!=='v'&&m[1]){
-    const withSrc=m[0]+'\n—— '+shortSrc(m[1]);
-    if(withSrc.length<=60) text=withSrc;
-  }
-  document.getElementById('in-msg').value=text;state.msg=text;draw();
-}
-function renderMottoSub(){
-  mottoSubEl.innerHTML='';
-  MOTTO_CATS.forEach(c=>{
-    const b=document.createElement('div');
-    b.className='pcat-btn'+(c===mottoCat?' active':'');b.textContent=c;
-    b.addEventListener('click',()=>{mottoCat=c;renderPhrases('座右銘');});
-    mottoSubEl.appendChild(b);
-  });
-  const dice=document.createElement('div');
-  dice.className='pcat-btn dice';dice.textContent='🎲 隨機一句';
-  dice.addEventListener('click',()=>{
-    const pool=MOTTOS.filter(m=>mottoCat==='全部'||m[2]===mottoCat);
-    const m=pool[Math.floor(Math.random()*pool.length)];
-    applyMotto(m);
-  });
-  mottoSubEl.appendChild(dice);
-}
 function renderPhrases(cat){
   phraseListEl.innerHTML='';
-  mottoSubEl.hidden=(cat!=='座右銘');
-  if(cat==='座右銘'){
-    renderMottoSub();
-    MOTTOS.filter(m=>mottoCat==='全部'||m[2]===mottoCat).forEach(m=>{
-      const el=document.createElement('div');
-      el.className='phrase-item';
-      el.textContent=m[0];
-      const s=document.createElement('span');s.className='phrase-source';s.textContent='── '+m[1];
-      el.appendChild(s);
-      el.addEventListener('click',()=>applyMotto(m));
-      phraseListEl.appendChild(el);
-    });
-    phraseListEl.scrollTop=0;
-    return;
-  }
   PHRASES[cat].forEach(p=>{
     const text=typeof p==='string'?p:p.t;
     const src=typeof p==='object'&&p.s?p.s:'';
@@ -2167,24 +1752,23 @@ aiGenBtn.addEventListener('click', async()=>{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:AI_MODEL,
+        model:'claude-sonnet-4-20250514',
         max_tokens:200,
         messages:[{role:'user',content:prompt}]
       })
     });
-    let data={};
-    try{data=await resp.json();}catch(pe){}
+    const data=await resp.json();
     const txt=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
-    if(resp.ok&&txt){
+    if(txt){
       lastAiText=txt;
       aiResult.className='ai-result';
       aiResult.textContent=txt;
       aiUseBtn.style.display='block';
     } else {
-      aiResult.textContent='⚠️ 生成失敗（'+aiErrMsg(resp,data)+'），請再試一次';
+      aiResult.textContent='⚠️ 生成失敗，請再試一次';
     }
   } catch(e){
-    aiResult.textContent='⚠️ 連不上 AI 服務，請確認網路後再試';
+    aiResult.textContent='⚠️ 網路錯誤，請稍後再試';
   }
   aiGenBtn.classList.remove('loading');
   aiGenBtn.innerHTML='<span class="btn-icon">✨</span> 重新生成';
@@ -2256,9 +1840,9 @@ PLATES.forEach((p,i)=>{
 });
 
 // ── Direction ──
-document.querySelectorAll('.dir-btn:not(.ratio-btn)').forEach(btn=>{
+document.querySelectorAll('.dir-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    document.querySelectorAll('.dir-btn:not(.ratio-btn)').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     state.dir=btn.dataset.dir;
     // 切換方向時重置到合理預設位置
@@ -2316,168 +1900,30 @@ document.querySelectorAll('.step-tab').forEach(tab=>{
 // ═══════════════════════════════════════════
 const canvas=document.getElementById('card-canvas');
 const ctx=canvas.getContext('2d');
-const CW=810;let CH=1080; // 寬固定 810；高依卡片比例：3:4=1080、9:16=1440、1:1=810
-
-// ── 上傳照片的擺放設定（每張照片各自記住）──
-function defaultFit(img){
-  const r=img.width/img.height, target=CW/CH;
-  return Math.abs(r-target)/target>0.08?'contain':'cover';
-}
-function bgOpts(){
-  const o=(activeUserIdx>=0&&userImages[activeUserIdx])||null;
-  if(!o) return {fit:'cover',pos:0.5};
-  if(!o.fit){o.fit=defaultFit(state.customBgImg);o.fitAuto=true;}
-  if(typeof o.pos!=='number') o.pos=0.5;
-  return o;
-}
-// 多段縮小再放大＝柔和、相容 iOS 的模糊（不依賴 ctx.filter）
-function softBlur(src,sx,sy,sw,sh,dw,dh,steps){
-  let w=Math.max(2,Math.round(dw/Math.pow(2,steps))),hh=Math.max(2,Math.round(dh/Math.pow(2,steps)));
-  let cur=document.createElement('canvas');cur.width=w;cur.height=hh;
-  let c=cur.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
-  c.drawImage(src,sx,sy,sw,sh,0,0,w,hh);
-  while(w<dw||hh<dh){
-    const nw=Math.min(dw,w*2),nh=Math.min(dh,hh*2);
-    const nx=document.createElement('canvas');nx.width=nw;nx.height=nh;
-    const nc=nx.getContext('2d');nc.imageSmoothingEnabled=true;nc.imageSmoothingQuality='high';
-    nc.drawImage(cur,0,0,nw,nh);cur=nx;w=nw;hh=nh;
-  }
-  return cur;
-}
-// 完整顯示的合成圖：每張照片快取一次（拖曳文字時不必重算）
-function containLayer(o,img){
-  if(o._contain&&o._containFor===img&&o._containCH===CH) return o._contain;
-  const out=document.createElement('canvas');out.width=CW;out.height=CH;
-  const g=out.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
-  const sc=Math.min(CW/img.width,CH/img.height);
-  const w=img.width*sc,h=img.height*sc,x=(CW-w)/2,y=(CH-h)/2;
-  const tall=w<CW-1; // 直式照片：補左右；橫式照片：補上下
-  // 底層：整張照片的柔和模糊，避免任何空隙
-  const sc2=Math.max(CW/img.width,CH/img.height);
-  const bw=img.width*sc2,bh=img.height*sc2;
-  g.drawImage(softBlur(img,0,0,img.width,img.height,Math.round(bw),Math.round(bh),5),(CW-bw)/2,(CH-bh)/2,bw,bh);
-  // 羽化寬度：交界處照片漸漸透明，融進延伸的邊緣
-  const F=tall?Math.min(w*0.12,90):Math.min(h*0.12,90);
-  // 邊緣延伸：取照片最外側 10% 的一條，拉伸到空白處（延伸到羽化範圍底下）再模糊，顏色和邊緣接得上
-  if(tall){
-    const band=Math.ceil(x+F), sw=Math.max(2,img.width*0.10);
-    g.drawImage(softBlur(img,0,0,sw,img.height,band,CH,6),0,0,band,CH);
-    g.drawImage(softBlur(img,img.width-sw,0,sw,img.height,band,CH,6),CW-band,0,band,CH);
-  }else{
-    const band=Math.ceil(y+F), sh=Math.max(2,img.height*0.10);
-    g.drawImage(softBlur(img,0,0,img.width,sh,CW,band,6),0,0,CW,band);
-    g.drawImage(softBlur(img,0,img.height-sh,img.width,sh,CW,band,6),0,CH-band,CW,band);
-  }
-  // 外側輕微壓暗，到交界處平滑歸零，讓主體突出又不留線
-  const D=tall?CW:CH, edge=tall?x:y;
-  const shade=tall?g.createLinearGradient(0,0,CW,0):g.createLinearGradient(0,0,0,CH);
-  shade.addColorStop(0,'rgba(0,0,0,0.30)');
-  shade.addColorStop(Math.min(0.5,(edge+F*0.5)/D),'rgba(0,0,0,0)');
-  shade.addColorStop(Math.max(0.5,1-(edge+F*0.5)/D),'rgba(0,0,0,0)');
-  shade.addColorStop(1,'rgba(0,0,0,0.30)');
-  g.fillStyle=shade;g.fillRect(0,0,CW,CH);
-  // 主體照片：交界處羽化
-  const m=document.createElement('canvas');m.width=Math.round(w);m.height=Math.round(h);
-  const mg=m.getContext('2d');mg.imageSmoothingEnabled=true;mg.imageSmoothingQuality='high';
-  mg.drawImage(img,0,0,m.width,m.height);
-  const L=tall?m.width:m.height, fr=F/L;
-  const fade=tall?mg.createLinearGradient(0,0,m.width,0):mg.createLinearGradient(0,0,0,m.height);
-  fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(fr*0.5,'rgba(0,0,0,0.55)');fade.addColorStop(fr,'rgba(0,0,0,1)');
-  fade.addColorStop(1-fr,'rgba(0,0,0,1)');fade.addColorStop(1-fr*0.5,'rgba(0,0,0,0.55)');fade.addColorStop(1,'rgba(0,0,0,0)');
-  mg.globalCompositeOperation='destination-in';mg.fillStyle=fade;mg.fillRect(0,0,m.width,m.height);
-  g.drawImage(m,x,y,w,h);
-  o._contain=out;o._containFor=img;o._containCH=CH;
-  return out;
-}
-function updateFitPanel(){
-  const panel=document.getElementById('fit-panel');
-  const o=(activeUserIdx>=0&&userImages[activeUserIdx]&&state.customBgImg)?bgOpts():null;
-  panel.classList.toggle('on',!!o);
-  if(!o) return;
-  const img=state.customBgImg, tall=(img.width/img.height)<(CW/CH);
-  document.querySelectorAll('.fit-btn').forEach(b=>{
-    const on=b.getAttribute('data-fit')===o.fit;
-    b.classList.toggle('active',on);b.setAttribute('aria-pressed',on?'true':'false');
-  });
-  const row=document.getElementById('fit-pos-row');
-  row.style.display=o.fit==='cover'?'flex':'none';
-  document.getElementById('fit-pos-a').textContent=tall?'上':'左';
-  document.getElementById('fit-pos-b').textContent=tall?'下':'右';
-  document.getElementById('fit-pos').value=Math.round(o.pos*100);
-  document.getElementById('fit-quick').style.display=(o.fit==='contain'&&tall&&(img.height/img.width)>1.5&&CH!==1440)?'block':'none';
-  document.getElementById('fit-hint').textContent=o.fit==='contain'
-    ?'整張照片都會顯示，空白處用模糊的同一張照片補滿。'
-    :'照片會填滿卡片，拖動滑桿選擇要保留'+(tall?'上方或下方':'左邊或右邊')+'。';
-}
-
-// ── 卡片比例 ──
-const RATIOS={'3:4':1080,'9:16':1440,'1:1':810};
-let cardRatio='3:4';
-const tplCache={};
-function drawTemplate(c,t){
-  if(CH===1080){t.draw(c);return;}
-  // 內建背景原本畫在 810×1080，其他比例時等比放大覆蓋、置中裁切
-  const key=t.label+'@'+CH;
-  if(!tplCache[key]){
-    const off=document.createElement('canvas');off.width=810;off.height=1080;
-    t.draw(off.getContext('2d'));
-    const out=document.createElement('canvas');out.width=CW;out.height=CH;
-    const sc=Math.max(CW/810,CH/1080),w=810*sc,hh=1080*sc;
-    out.getContext('2d').drawImage(off,(CW-w)/2,(CH-hh)/2,w,hh);
-    tplCache[key]=out;
-  }
-  c.drawImage(tplCache[key],0,0);
-}
-function setRatio(r,silent){
-  if(!RATIOS[r]) r='3:4';
-  cardRatio=r;CH=RATIOS[r];
-  canvas.height=CH;canvas.style.aspectRatio='810/'+CH;
-  // 預覽高度維持和 3:4 差不多，長圖不會把畫面佔滿
-  const outer=canvas.parentNode;
-  outer.style.maxWidth=Math.round(Math.min(280,373*CW/CH))+'px';
-  const vc=document.getElementById('vid-canvas');if(vc){vc.width=CW;vc.height=CH;}
-  // 自動決定的擺放方式依新比例重算；使用者手動選過的保留
-  userImages.forEach(o=>{if(o.fitAuto){delete o.fit;delete o.fitAuto;}});
-  document.querySelectorAll('.ratio-btn').forEach(b=>{
-    const on=b.getAttribute('data-ratio')===r;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on?'true':'false');
-  });
-  try{localStorage.setItem('gmr.ratio',r);}catch(e){}
-  if(!silent){draw();updateFitPanel();if(typeof buildTextOverlay==='function') setTimeout(buildTextOverlay,30);}
-}
+const CW=810,CH=1080;
 
 function draw(){
-  drawBackground();
-  drawBorder();
-  if(state.dir==='v') drawTextVertical();
-  else drawTextHorizontal();
-}
-
-function drawBackground(){
   ctx.clearRect(0,0,CW,CH);
   // 1. background
   if(state.customBgImg){
     const img=state.customBgImg;
-    const o=bgOpts();
-    if(o.fit==='contain'){
-      // 完整顯示：兩側（或上下）用照片最外緣延伸補滿，交界羽化，看不出切線
-      ctx.drawImage(containLayer(o,img),0,0,CW,CH);
-    } else {
-      // 填滿裁切：依「保留位置」決定裁掉哪一邊（0＝保留上/左，1＝保留下/右）
-      const sc=Math.max(CW/img.width,CH/img.height);
-      const w=img.width*sc,h=img.height*sc;
-      ctx.drawImage(img,(CW-w)*o.pos,(CH-h)*o.pos,w,h);
-    }
+    const sc=Math.max(CW/img.width,CH/img.height);
+    const w=img.width*sc,h=img.height*sc;
+    ctx.drawImage(img,(CW-w)/2,(CH-h)/2,w,h);
     // scrim
     const scrim=ctx.createLinearGradient(0,0,0,CH);
     scrim.addColorStop(0,'rgba(0,0,0,0.12)');scrim.addColorStop(.5,'rgba(0,0,0,0.22)');scrim.addColorStop(1,'rgba(0,0,0,0.5)');
     ctx.fillStyle=scrim;ctx.fillRect(0,0,CW,CH);
   } else {
-    drawTemplate(ctx,state.tpl);
+    state.tpl.draw(ctx);
     // overlay scrim
     const scrim=ctx.createLinearGradient(0,0,0,CH);
     scrim.addColorStop(0,'rgba(0,0,0,0.05)');scrim.addColorStop(.5,'rgba(0,0,0,0.18)');scrim.addColorStop(1,'rgba(0,0,0,0.45)');
     ctx.fillStyle=scrim;ctx.fillRect(0,0,CW,CH);
   }
+  drawBorder();
+  if(state.dir==='v') drawTextVertical();
+  else drawTextHorizontal();
 }
 
 function drawBorder(){
@@ -2661,375 +2107,6 @@ function drawTextVertical(){
   setShadow(false);
 }
 
-// ═══════════════════════════════════════════
-//  動畫旁白 / 有聲影片
-// ═══════════════════════════════════════════
-var narrAC = null;          // AudioContext（iOS 必須在點擊當下建立/resume）
-var narrCache = {};         // key → AudioBuffer
-var narrRun = null;         // 目前播放中的動畫
-var narrBlobUrl = '';
-var narrFile = null;
-var narrFallbackNote = '';  // 阿公聲音失敗、改用男聲的原因
-
-// ── 阿公 AI 聲音（arcar /tts voice:"agong"）：記住選的聲音與通行碼 ──
-var NARR_LS = 'gmr_narr';
-function narrAgongMsg(t, warn){
-  var el = document.getElementById('narr-agong-msg');
-  el.textContent = t; el.style.color = warn ? '#e8a24a' : '';
-}
-function narrAgongUI(){
-  document.getElementById('narr-agong').style.display = document.getElementById('narr-voice').value === 'agong' ? 'block' : 'none';
-}
-function narrSavePrefs(){
-  if(!LS_OK) return;
-  try{ localStorage.setItem(NARR_LS, JSON.stringify({ voice:document.getElementById('narr-voice').value, token:document.getElementById('narr-token').value.trim() })); }catch(e){}
-}
-document.getElementById('narr-voice').addEventListener('change', function(){ narrAgongUI(); narrSavePrefs(); });
-document.getElementById('narr-token').addEventListener('change', narrSavePrefs);
-setTimeout(function(){
-  try{
-    var p = LS_OK ? JSON.parse(localStorage.getItem(NARR_LS) || '{}') : {};
-    if(p.voice && document.querySelector('#narr-voice option[value="'+p.voice+'"]')) document.getElementById('narr-voice').value = p.voice;
-    if(p.token) document.getElementById('narr-token').value = p.token;
-  }catch(e){}
-  narrAgongUI();
-}, 0);
-
-function narrEnsureAC(){
-  var AC = window.AudioContext || window.webkitAudioContext;
-  if(!AC) return null;
-  if(!narrAC) narrAC = new AC();
-  if(narrAC.state === 'suspended'){ try{ narrAC.resume(); }catch(e){} }
-  return narrAC;
-}
-
-function narrStrip(s){
-  return String(s||'').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}️‍]/gu,'').trim();
-}
-
-function narrSpeechText(){
-  var title = narrStrip(state.title||'早安');
-  var msg = narrStrip(state.msg||(state.dir==='v'?'願你今天充滿陽光笑口常開萬事順心':'願你今天充滿陽光\n笑口常開，萬事順心！'));
-  msg = msg.replace(/\n+/g,'，');
-  var t = title ? title.replace(/[，。！？!?,.\s]+$/,'') + '。' : '';
-  t += msg;
-  if(document.getElementById('narr-sign').checked && state.sign){
-    t += (/[。！？!?]$/.test(t)?'':'。') + narrStrip(state.sign);
-  }
-  return t;
-}
-
-function narrDecode(ac, ab){
-  return new Promise(function(res, rej){
-    var p = ac.decodeAudioData(ab, res, rej);   // 舊版 Safari 只支援 callback
-    if(p && p.then) p.then(res, rej);
-  });
-}
-
-async function narrGetAudio(text){
-  var voice = document.getElementById('narr-voice').value;
-  var rate = +document.getElementById('narr-rate').value;
-  var key = voice+'|'+rate+'|'+text;
-  if(narrCache[key]) return narrCache[key];
-  var payload = { text:text, voice:voice, rate:rate };
-  if(voice === 'agong') payload.token = document.getElementById('narr-token').value.trim();
-  narrFallbackNote = '';
-  var resp = await fetch(PROXY + '/tts', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  });
-  var ct = resp.headers.get('Content-Type') || '';
-  if(!resp.ok || ct.indexOf('json') >= 0){
-    var msg = 'HTTP ' + resp.status;
-    try{ var j = await resp.json(); msg = j.error + (j.detail ? '（'+j.detail.join('；')+'）' : ''); }catch(e){}
-    throw new Error(msg);
-  }
-  // 選了阿公但 arcar 改用其他聲音（例如還沒設定、通行碼不對）→ 提示原因，這次不快取，下次會再試阿公聲音
-  var engine = resp.headers.get('X-TTS-Engine') || '';
-  var fellBack = voice === 'agong' && engine !== 'agong';
-  if(voice === 'agong'){
-    if(fellBack){
-      var note = ''; try{ note = decodeURIComponent(resp.headers.get('X-TTS-Note') || ''); }catch(e){}
-      note = (note.match(/agong: ([^|]*)/) || [,''])[1].trim();
-      narrFallbackNote = note || '阿公聲音暫時不能用';
-      narrAgongMsg('⚠️ 阿公聲音沒成功（' + narrFallbackNote + '），這次先用男聲。', true);
-    }else{
-      narrAgongMsg('✅ 阿公聲音 OK', false);
-    }
-  }
-  var buf = await narrDecode(narrAC, await resp.arrayBuffer());
-  if(!fellBack) narrCache[key] = buf;
-  return buf;
-}
-
-// 把目前卡片拆成：背景層、背板裝飾層、逐字資料
-function narrCaptureLayers(){
-  function mk(){ var c=document.createElement('canvas'); c.width=CW; c.height=CH; return c; }
-  var bg = mk(), deco = mk(), calls = [];
-  // 背景 + 外框
-  drawBackground(); drawBorder();
-  bg.getContext('2d').drawImage(canvas,0,0);
-  // 背板/分隔線（攔截 fillText，只記錄不畫字）
-  // 跑兩次：第一次找出最後一個「標題/祝福語」字；第二次在那之後清空畫布，
-  // 讓日期、署名的背板落在獨立的 tail 圖層，跟著文字一起淡入
-  function isTailFont(f){ return /\b(lighter|[1-3]00)\b/.test(f) && !/\b(bold|bolder|[6-9]00)\b/.test(f); }
-  var lastMain = -1, idx = 0, tail = mk();
-  function pass(cut){
-    ctx.clearRect(0,0,CW,CH); idx = 0;
-    ctx.fillText = function(txt,x,y){
-      if(!cut){
-        if(!isTailFont(ctx.font)) lastMain = idx;
-        calls.push({ txt:String(txt), x:x, y:y, font:ctx.font, align:ctx.textAlign, base:ctx.textBaseline,
-          fill:ctx.fillStyle, alpha:ctx.globalAlpha, sc:ctx.shadowColor, sb:ctx.shadowBlur,
-          m: ctx.getTransform ? ctx.getTransform() : null });
-      } else if(idx === lastMain){
-        deco.getContext('2d').drawImage(canvas,0,0);
-        ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,CW,CH); ctx.restore();
-      }
-      idx++;
-    };
-    try{ if(state.dir==='v') drawTextVertical(); else drawTextHorizontal(); }
-    finally{ delete ctx.fillText; }
-  }
-  pass(false);
-  pass(true);
-  if(lastMain < 0) deco.getContext('2d').drawImage(canvas,0,0);
-  else tail.getContext('2d').drawImage(canvas,0,0);
-  draw();   // 還原預覽
-
-  // 依字重分組：bold=標題、300=日期/署名、其餘=祝福語；拆成單字並算好位置
-  var glyphs = [];
-  calls.forEach(function(c){
-    var f = c.font;
-    var group = /\b(bold|bolder|[6-9]00)\b/.test(f) ? 'title' : isTailFont(f) ? 'tail' : 'msg';
-    ctx.save(); ctx.font = f;
-    var chars = Array.from(c.txt);
-    var full = ctx.measureText(c.txt).width;
-    var x0 = c.align==='center' ? c.x - full/2 : (c.align==='right'||c.align==='end') ? c.x - full : c.x;
-    var acc = '';
-    chars.forEach(function(ch){
-      glyphs.push({ ch:ch, x:x0 + ctx.measureText(acc).width, y:c.y, c:c, group:group });
-      acc += ch;
-    });
-    ctx.restore();
-  });
-  return { bg:bg, deco:deco, tail:tail, glyphs:glyphs };
-}
-
-function narrWeight(ch){
-  if(/[，、；：,;:]/.test(ch)) return 0.55;
-  if(/[。！？!?…]/.test(ch)) return 0.9;
-  if(/[\s\-—–·~「」『』（）()“”"']/.test(ch)) return 0;
-  if(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}️‍]/u.test(ch)) return 0;
-  return 1;
-}
-
-// 依旁白長度排好每個字出現的時間
-function narrSchedule(layers, A0, dur, readSign){
-  var lead = 0.12, trail = 0.25;
-  var speak = layers.glyphs.filter(function(g){ return g.group!=='tail'; });
-  var signW = (readSign && state.sign) ? Array.from(narrStrip(state.sign)).reduce(function(s,ch){return s+narrWeight(ch);},0) + 0.9 : 0;
-  var total = speak.reduce(function(s,g){ return s+narrWeight(g.ch); }, 0) + 0.9 + signW;
-  var span = Math.max(0.5, dur - lead - trail);
-  var cum = 0, seenMsg = false;
-  speak.forEach(function(g){
-    if(g.group==='msg' && !seenMsg){ seenMsg = true; cum += 0.9; }   // 標題後的停頓
-    g.t = A0 + lead + (cum/total)*span - 0.05;
-    cum += narrWeight(g.ch);
-  });
-  var tailT = A0 + lead + (cum/total)*span + 0.1;
-  layers.glyphs.forEach(function(g){ if(g.group==='tail') g.t = tailT; });
-  layers.tailT = tailT;
-  var lastT = layers.glyphs.reduce(function(m,g){ return Math.max(m,g.t); }, A0 + dur);
-  return Math.max(A0 + dur, lastT + 0.8) + 1.6;   // 影片總長
-}
-
-function narrEase(x){ x = Math.min(1,Math.max(0,x)); return 1 - Math.pow(1-x,3); }
-
-// 光點（固定亂數，每次一樣）
-var NARR_DOTS = (function(){
-  var a=[], s=7;
-  function r(){ s=(s*16807)%2147483647; return s/2147483647; }
-  for(var i=0;i<26;i++) a.push({ x:r()*CW, y:r()*CH, r:2+r()*4, sp:18+r()*30, ph:r()*6.28 });
-  return a;
-})();
-
-function narrRenderFrame(c, L, t, T){
-  c.setTransform(1,0,0,1,0,0);
-  c.globalAlpha = 1; c.shadowColor='transparent'; c.shadowBlur=0;
-  c.fillStyle = '#000'; c.fillRect(0,0,CW,CH);
-  // 背景：慢慢拉近 + 淡入
-  var z = 1.07 - 0.07*Math.min(1, t/T);
-  c.globalAlpha = narrEase(t/0.6);
-  c.drawImage(L.bg, CW*(1-z)/2, CH*(1-z)/2, CW*z, CH*z);
-  // 飄浮光點
-  NARR_DOTS.forEach(function(d){
-    var y = ((d.y - d.sp*t) % CH + CH) % CH;
-    var a = (0.25 + 0.25*Math.sin(t*1.6 + d.ph)) * narrEase(t/1.2);
-    var g = c.createRadialGradient(d.x,y,0,d.x,y,d.r*3);
-    g.addColorStop(0,'rgba(255,240,190,'+a+')'); g.addColorStop(1,'rgba(255,240,190,0)');
-    c.globalAlpha = 1; c.fillStyle = g;
-    c.beginPath(); c.arc(d.x,y,d.r*3,0,6.283); c.fill();
-  });
-  // 背板
-  c.globalAlpha = narrEase((t-0.3)/0.6);
-  c.drawImage(L.deco,0,0);
-  c.globalAlpha = narrEase((t - L.tailT)/0.7);
-  if(c.globalAlpha > 0) c.drawImage(L.tail,0,0);
-  // 逐字
-  L.glyphs.forEach(function(g){
-    var p = (t - g.t) / (g.group==='tail' ? 0.7 : 0.32);
-    if(p <= 0) return;
-    var e = narrEase(p), k = g.c;
-    if(k.m) c.setTransform(k.m); else c.setTransform(1,0,0,1,0,0);
-    c.font = k.font; c.textAlign = 'left'; c.textBaseline = k.base;
-    c.fillStyle = k.fill; c.shadowColor = k.sc; c.shadowBlur = k.sb;
-    c.globalAlpha = k.alpha * e;
-    c.fillText(g.ch, g.x, g.y + (1-e)*14);
-    // 剛出現時的金色光暈
-    if(p < 1 && g.group!=='tail'){
-      c.globalAlpha = (1-e) * 0.8; c.shadowColor = 'rgba(255,215,120,.95)'; c.shadowBlur = 28;
-      c.fillText(g.ch, g.x, g.y + (1-e)*14);
-    }
-  });
-  c.setTransform(1,0,0,1,0,0); c.globalAlpha = 1; c.shadowColor='transparent'; c.shadowBlur=0;
-}
-
-function narrPickMime(){
-  if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
-  var list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4',
-              'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
-  for(var i=0;i<list.length;i++) if(MediaRecorder.isTypeSupported(list[i])) return list[i];
-  return '';
-}
-
-var vidModal = document.getElementById('vid-modal');
-var vidCanvas = document.getElementById('vid-canvas');
-var vidPlayer = document.getElementById('vid-player');
-var vidStatus = document.getElementById('vid-status');
-var vidProg = document.querySelector('#vid-prog div');
-var vidShare = document.getElementById('vid-share');
-var vidDl = document.getElementById('vid-download');
-
-function narrStop(){
-  if(narrRun){
-    narrRun.stopped = true;
-    try{ narrRun.src && narrRun.src.stop(); }catch(e){}
-    try{ narrRun.rec && narrRun.rec.state!=='inactive' && narrRun.rec.stop(); }catch(e){}
-    narrRun = null;
-  }
-}
-
-function narrOpenModal(){
-  narrStop();
-  vidCanvas.style.display = 'block';
-  vidPlayer.style.display = 'none'; vidPlayer.pause(); vidPlayer.removeAttribute('src');
-  vidShare.style.display = 'none'; vidDl.style.display = 'none';
-  vidProg.style.width = '0';
-  vidModal.style.display = 'flex';
-}
-
-// record=false 試聽；record=true 錄成影片
-async function narrStart(record){
-  var ac = narrEnsureAC();            // 一定要在點擊當下
-  narrOpenModal();
-  if(!ac){ vidStatus.textContent = '⚠️ 這個瀏覽器不支援音訊處理'; return; }
-  var mime = record ? narrPickMime() : '';
-  if(record && (!mime || !vidCanvas.captureStream)){
-    vidStatus.textContent = '⚠️ 這個瀏覽器不支援錄製影片，請用 iPhone Safari 或 Chrome 開啟';
-    return;
-  }
-  var text = narrSpeechText();
-  var L = narrCaptureLayers();
-  var vc = vidCanvas.getContext('2d');
-  L.tailT = 1e9;
-  narrRenderFrame(vc, L, 0, 1);
-  vidStatus.textContent = '🎙️ 正在產生旁白…';
-
-  var buf;
-  try{ buf = await narrGetAudio(text); }
-  catch(e){
-    vidStatus.innerHTML = '⚠️ 旁白產生失敗<br><span style="font-size:.62rem;opacity:.7">'+String(e.message||e).slice(0,160)+'</span>';
-    return;
-  }
-  if(narrFallbackNote){
-    vidStatus.innerHTML = '⚠️ 阿公聲音沒成功，這次先用男聲<br><span style="font-size:.62rem;opacity:.7">'+narrFallbackNote.replace(/[<>&]/g,'').slice(0,80)+'</span>';
-    await new Promise(function(r){ setTimeout(r, 1800); });
-  }
-  if(vidModal.style.display==='none') return;   // 等待中被關掉
-
-  var A0 = 0.9;
-  var readSign = document.getElementById('narr-sign').checked;
-  var T = narrSchedule(L, A0, buf.duration, readSign);
-  var run = narrRun = { stopped:false };
-
-  var src = ac.createBufferSource(); src.buffer = buf; run.src = src;
-  src.connect(ac.destination);
-  var chunks = [];
-  if(record){
-    var dest = ac.createMediaStreamDestination();
-    src.connect(dest);
-    var stream = vidCanvas.captureStream(30);
-    dest.stream.getAudioTracks().forEach(function(tr){ stream.addTrack(tr); });
-    var rec = new MediaRecorder(stream, { mimeType:mime, videoBitsPerSecond:4000000, audioBitsPerSecond:128000 });
-    run.rec = rec;
-    rec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
-    rec.onstop = function(){
-      stream.getTracks().forEach(function(tr){ tr.stop(); });
-      if(run.stopped && !run.finished) return;
-      narrFinish(new Blob(chunks, { type: mime.split(';')[0] }), mime);
-    };
-    rec.start(250);
-  }
-  var t0 = ac.currentTime + 0.05;
-  src.start(t0 + A0);
-  vidStatus.textContent = record ? '🔴 錄製中，請稍候（約 '+Math.ceil(T)+' 秒）…' : '▶ 試聽中…';
-
-  (function loop(){
-    if(run.stopped) return;
-    var t = ac.currentTime - t0;
-    narrRenderFrame(vc, L, Math.max(0,t), T);
-    vidProg.style.width = Math.min(100, Math.max(0,t)/T*100) + '%';
-    if(t < T){ requestAnimationFrame(loop); return; }
-    run.finished = true;
-    if(record){ vidStatus.textContent = '⏳ 正在完成影片…'; run.rec.stop(); }
-    else vidStatus.textContent = '✅ 試聽結束・滿意的話按「🎬 有聲影片」匯出';
-    narrRun = null;
-  })();
-}
-
-function narrFinish(blob, mime){
-  if(narrBlobUrl){ try{ URL.revokeObjectURL(narrBlobUrl); }catch(e){} }
-  narrBlobUrl = URL.createObjectURL(blob);
-  var ext = mime.indexOf('mp4')>=0 ? 'mp4' : 'webm';
-  var d = new Date();
-  var name = '早安_' + (d.getMonth()+1) + d.getDate() + '_' + d.getHours() + d.getMinutes() + '.' + ext;
-  narrFile = null;
-  try{ narrFile = new File([blob], name, { type: blob.type }); }catch(e){}
-  vidCanvas.style.display = 'none';
-  vidPlayer.src = narrBlobUrl; vidPlayer.style.display = 'block';
-  vidProg.style.width = '100%';
-  var canShare = !!(narrFile && navigator.canShare && navigator.canShare({ files:[narrFile] }));
-  vidShare.style.display = canShare ? 'inline-block' : 'none';
-  vidDl.href = narrBlobUrl; vidDl.download = name; vidDl.style.display = 'inline-block';
-  vidStatus.innerHTML = canShare
-    ? '✅ 影片完成！按「分享到 LINE」<br><span style="font-size:.65rem;opacity:.75">或在分享選單選「儲存影片」存到相簿</span>'
-    : '✅ 影片完成！按「下載影片」後到 LINE 傳送';
-}
-
-vidShare.addEventListener('click', function(){
-  if(!narrFile) return;
-  navigator.share({ files:[narrFile], title:'早安' }).catch(function(){});
-});
-document.getElementById('vid-close').addEventListener('click', function(){
-  narrStop();
-  vidPlayer.pause();
-  vidModal.style.display = 'none';
-});
-document.getElementById('narr-preview-btn').addEventListener('click', function(){ narrStart(false); });
-document.getElementById('narr-export-btn').addEventListener('click', function(){ narrStart(true); });
-document.getElementById('video-btn').addEventListener('click', function(){ narrStart(true); });
-
 // ── Save（iOS 相容版）──
 document.getElementById('save-btn').addEventListener('click',function(){
   // 先確保 overlay 不在畫面上（不畫拖移框）
@@ -3039,7 +2116,7 @@ document.getElementById('save-btn').addEventListener('click',function(){
 
   // 產生高解析度輸出
   var tmp = document.createElement('canvas');
-  tmp.width = canvas.width; tmp.height = canvas.height;
+  tmp.width = 810; tmp.height = 1080;
   tmp.getContext('2d').drawImage(canvas, 0, 0);
 
   overlay.style.opacity = '1';
@@ -3065,6 +2142,30 @@ document.getElementById('save-btn').addEventListener('click',function(){
 document.getElementById('save-modal-close').addEventListener('click',function(){
   document.getElementById('save-modal').style.display = 'none';
   document.getElementById('save-preview-img').src = '';
+});
+
+// ── iOS 返回時重置所有 Modal（黑屏修復）──
+function resetAllModals(){
+  var saveModal = document.getElementById('save-modal');
+  if(saveModal && saveModal.style.display !== 'none'){
+    saveModal.style.display = 'none';
+    var pi = document.getElementById('save-preview-img');
+    if(pi) pi.src = '';
+  }
+  if(eraserModal && eraserModal.classList.contains('open')){
+    closeEraser();
+  }
+  document.body.style.overflow = '';
+}
+// 當頁面從 LINE / 其他 App 切回時觸發
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible'){
+    resetAllModals();
+  }
+});
+// pageshow：iOS bfcache 返回頁面
+window.addEventListener('pageshow', function(){
+  resetAllModals();
 });
 
 // ── 清除全部圖庫 ──
@@ -3306,16 +2407,6 @@ setTimeout(function(){
   try{ loadGalleryFromLS(); }catch(e){ console.log('init ls err:',e.message); }
 },150);
 
-// 卡片比例：還原上次選的比例，並綁定按鈕
-(function(){
-  let saved='3:4';
-  try{saved=localStorage.getItem('gmr.ratio')||'3:4';}catch(e){}
-  setRatio(saved,true);
-  document.querySelectorAll('.ratio-btn').forEach(b=>{
-    b.addEventListener('click',()=>{setRatio(b.getAttribute('data-ratio'));setTimeout(refreshOverlay,60);});
-  });
-  document.getElementById('fit-quick').addEventListener('click',()=>{setRatio('9:16');setTimeout(refreshOverlay,60);});
-})();
 draw();
 // 初始化 overlay（延遲確保 canvas 已渲染）
 setTimeout(refreshOverlay, 200);
