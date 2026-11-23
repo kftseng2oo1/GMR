@@ -1376,22 +1376,21 @@ emAnalyzeBtn.addEventListener('click', async()=>{
     const data=await resp.json();
     const raw=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
     emAddLog('📥 收到回應','linf');
+    if(data.error||!raw){
+      emAddLog('❌ AI 錯誤：'+(data.error&&(data.error.message||JSON.stringify(data.error))||'空回應').slice(0,160),'lwrn');
+      emSetStatus('err','AI 沒有回傳結果，請重試');emAnalyzeBtn.disabled=false;emAnalyzeBtn.innerHTML='🔍 重新分析';return;
+    }
     let parsed;
     try{
       const m=raw.replace(/```json|```/g,'').match(/\{[\s\S]*\}/);
       parsed=JSON.parse(m?m[0]:raw);
     }catch(pe){emAddLog('⚠️ 格式解析失敗','lwrn');emSetStatus('err','解析失敗，請重試');emAnalyzeBtn.disabled=false;emAnalyzeBtn.innerHTML='🔍 重新分析';return;}
     const TW=tmpC.width, TH=tmpC.height;
-    emRegions=(parsed.regions||[]).map(r=>{
-      let x=+r.x,y=+r.y,w=+r.w,h=+r.h;
-      // 相容：若 AI 仍回傳 0–1 比例座標
-      if(x<=1&&y<=1&&w<=1&&h<=1){x*=TW;y*=TH;w*=TW;h*=TH;}
-      // 保險邊距：AI 框常偏小，四周各外擴 h 的 15%
-      const pad=Math.max(4,h*0.15);
-      x-=pad;y-=pad;w+=pad*2;h+=pad*2;
-      x=clamp(x,0,TW);y=clamp(y,0,TH);w=Math.min(w,TW-x);h=Math.min(h,TH-y);
-      return {text:r.text,x:x/TW,y:y/TH,w:w/TW,h:h/TH};
-    }).filter(r=>r.w>0.005&&r.h>0.005);
+    const rawList=Array.isArray(parsed)?parsed:(parsed.regions||parsed.boxes||parsed.texts||[]);
+    emRegions=emNormalizeRegions(rawList,TW,TH);
+    if(rawList.length&&!emRegions.length){
+      emAddLog('⚠️ AI 回傳 '+rawList.length+' 筆但座標無法使用：'+raw.slice(0,160),'lwrn');
+    }
     emAddLog('✅ 找到 '+emRegions.length+' 個文字區域','lok');
     renderEmRegions();
     document.getElementById('em-regions-card').style.display='block';
@@ -1408,6 +1407,45 @@ emAnalyzeBtn.addEventListener('click', async()=>{
   emAnalyzeBtn.disabled=false;
   emAnalyzeBtn.innerHTML='🔍 重新分析';
 });
+
+// 把 AI 各種可能的座標格式統一成 0–1 比例的 {x,y,w,h}
+function emNormalizeRegions(list,TW,TH){
+  const boxes=[];
+  list.forEach(r=>{
+    if(!r||typeof r!=='object')return;
+    let x1,y1,x2,y2;
+    const arr=r.bbox||r.box||r.rect;
+    if(Array.isArray(arr)&&arr.length===4){
+      const a=arr.map(Number);
+      // [x1,y1,x2,y2] 或 [x,y,w,h]：第3、4值大於第1、2值且加起來超界時視為 x2,y2
+      if(a[2]>a[0]&&a[3]>a[1]&&(a[0]+a[2]>TW*1.05||a[1]+a[3]>TH*1.05)){x1=a[0];y1=a[1];x2=a[2];y2=a[3];}
+      else{x1=a[0];y1=a[1];x2=a[0]+a[2];y2=a[1]+a[3];}
+    }else if(r.x1!=null&&r.x2!=null){x1=+r.x1;y1=+r.y1;x2=+r.x2;y2=+r.y2;}
+    else{
+      x1=+(r.x??r.left);y1=+(r.y??r.top);
+      x2=x1+(+(r.w??r.width));y2=y1+(+(r.h??r.height));
+    }
+    if(![x1,y1,x2,y2].every(Number.isFinite))return;
+    if(x2<x1)[x1,x2]=[x2,x1];if(y2<y1)[y1,y2]=[y2,y1];
+    boxes.push({text:r.text||r.content||'',x1,y1,x2,y2});
+  });
+  if(!boxes.length)return [];
+  // 判斷座標空間：0–1 比例 / 像素 / 0–1000 正規化 / AI 自己的縮放空間
+  const maxX=Math.max(...boxes.map(b=>b.x2)), maxY=Math.max(...boxes.map(b=>b.y2));
+  let sx=1,sy=1;
+  if(maxX<=1.01&&maxY<=1.01){sx=TW;sy=TH;}
+  else if(maxX>TW*1.05||maxY>TH*1.05){
+    if(maxX<=1000&&maxY<=1000){sx=TW/1000;sy=TH/1000;}
+    else{const s=Math.min(TW/maxX,TH/maxY);sx=sy=s;}
+  }
+  return boxes.map(b=>{
+    let x1=b.x1*sx,y1=b.y1*sy,x2=b.x2*sx,y2=b.y2*sy;
+    // AI 框常偏小，四周外擴「字高」的 15%
+    const pad=Math.max(4,(y2-y1)*0.15);
+    x1=clamp(x1-pad,0,TW);y1=clamp(y1-pad,0,TH);x2=clamp(x2+pad,0,TW);y2=clamp(y2+pad,0,TH);
+    return {text:b.text,x:x1/TW,y:y1/TH,w:(x2-x1)/TW,h:(y2-y1)/TH};
+  }).filter(r=>r.w>0.005&&r.h>0.005);
+}
 
 function renderEmRegions(){
   emOverlay.innerHTML='';
