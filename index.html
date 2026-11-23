@@ -352,7 +352,9 @@ input[type=range]::-webkit-slider-thumb{
 .em-body{padding:12px;}
 /* preview inside modal */
 .em-preview{position:relative;border-radius:8px;overflow:hidden;background:#000;margin-bottom:10px;}
-#em-canvas{display:block;width:100%;height:auto;max-height:45vh;}
+#em-canvas{display:block;width:100%;height:auto;}
+.em-dil-row{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--text);margin:4px 0 2px;}
+.em-dil-row input{flex:1;accent-color:#00d4ff;}
 .em-overlay{position:absolute;inset:0;pointer-events:all;}
 .em-box{
   position:absolute;border:2px solid #00d4ff;
@@ -753,10 +755,12 @@ input[type=range]::-webkit-slider-thumb{
       <button class="em-add-region" id="em-add-region-btn">＋ 手動新增區域</button>
       <div class="em-hint">框框可拖移位置・拉角落控點調整大小</div>
       <div class="em-algo-row" id="em-algo-row">
-        <div class="em-algo-btn active" data-algo="inpaint"><span class="em-algo-icon">🎨</span>周圍取色</div>
+        <div class="em-algo-btn active" data-algo="smart"><span class="em-algo-icon">🎯</span>智慧筆畫</div>
+        <div class="em-algo-btn" data-algo="box"><span class="em-algo-icon">🧱</span>整框修補</div>
         <div class="em-algo-btn" data-algo="blur"><span class="em-algo-icon">🌫️</span>高斯模糊</div>
-        <div class="em-algo-btn" data-algo="mean"><span class="em-algo-icon">🖌️</span>均色填補</div>
       </div>
+      <div class="em-dil-row"><span>筆畫擴張</span><input type="range" id="em-dilate" min="0" max="3" step="1" value="1"><span id="em-dilate-lbl">中</span></div>
+      <div class="em-hint">智慧筆畫：只修補文字筆畫，保留背景紋理；有殘影就調粗再清一次</div>
     </div>
   </div>
   <div class="em-card" id="em-compare-card" style="display:none">
@@ -1249,7 +1253,26 @@ const emApplyBtn    = document.getElementById('em-apply-btn');
 const eraseTrigger  = document.getElementById('erase-trigger-btn');
 
 let emRegions = [];
-let emAlgo    = 'inpaint';
+let emAlgo    = 'smart';
+let emDilate  = 1;
+(function(){
+  const sl=document.getElementById('em-dilate'),lb=document.getElementById('em-dilate-lbl');
+  sl.addEventListener('input',()=>{emDilate=+sl.value;lb.textContent=['細','中','粗','特粗'][emDilate];});
+})();
+
+// 讓預覽 canvas 與 overlay 嚴格等比、等大（舊版 max-height 會把直式圖壓扁，框框位置跟實際清除位置對不上）
+function emFitPreview(){
+  const prev=emCanvas.parentElement, body=prev.parentElement;
+  if(!emCanvas.width||!body)return;
+  const cs=getComputedStyle(body);
+  const maxW=body.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  const maxH=window.innerHeight*0.45;
+  const s=Math.min(maxW/emCanvas.width, maxH/emCanvas.height);
+  const w=Math.floor(emCanvas.width*s), h=Math.floor(emCanvas.height*s);
+  emCanvas.style.width=w+'px';emCanvas.style.height=h+'px';
+  prev.style.width=w+'px';prev.style.marginLeft='auto';prev.style.marginRight='auto';
+}
+window.addEventListener('resize',()=>{if(eraserModal.classList.contains('open'))emFitPreview();});
 let emWorkImg = null;   // the image being processed
 let emWorkIdx = -1;     // index in userImages
 
@@ -1281,6 +1304,7 @@ function openEraser(imgObj, idx){
   emCtx.drawImage(imgObj.img,0,0);
   emSetStatus('','準備好，點下方按鈕開始分析');
   eraserModal.classList.add('open');
+  emFitPreview();
   emBtns.style.display='block';
   document.body.style.overflow='hidden';
 }
@@ -1321,15 +1345,19 @@ emAnalyzeBtn.addEventListener('click', async()=>{
   emAddLog('📤 上傳圖片給 AI…','linf');
 
   // convert to base64
+  // 縮到長邊 1568px 再上傳：AI 本來就會縮圖，先縮可加快上傳、座標也更準
+  const iw=emWorkImg.img.width, ih=emWorkImg.img.height;
+  const sc=Math.min(1,1568/Math.max(iw,ih));
   const tmpC=document.createElement('canvas');
-  tmpC.width=emWorkImg.img.width;tmpC.height=emWorkImg.img.height;
-  tmpC.getContext('2d').drawImage(emWorkImg.img,0,0);
-  const b64=tmpC.toDataURL('image/jpeg',0.85).split(',')[1];
+  tmpC.width=Math.round(iw*sc);tmpC.height=Math.round(ih*sc);
+  tmpC.getContext('2d').drawImage(emWorkImg.img,0,0,tmpC.width,tmpC.height);
+  const b64=tmpC.toDataURL('image/jpeg',0.88).split(',')[1];
 
-  const prompt='請分析這張圖片中所有可見的文字區域（包含中文、英文、數字、浮水印）。'+
-    '對每個文字區域回傳相對座標（0到1）。'+
-    '只輸出純 JSON，格式：{"regions":[{"text":"內容","x":0.1,"y":0.05,"w":0.8,"h":0.1}]}'+
-    '若無文字則輸出{"regions":[]}。不要任何說明或 markdown。';
+  const prompt='這張圖片尺寸為 '+tmpC.width+'×'+tmpC.height+' 像素。請找出圖中所有可見文字（中文、英文、數字、浮水印、印章、logo 文字）。\n'+
+    '規則：\n1. 每「一行」文字一個區域；直排文字每一「欄」一個區域。\n'+
+    '2. 外框必須完整包住文字，包含描邊、陰影、光暈，寧可稍大不要切到字。\n'+
+    '3. 座標用像素：x,y 為左上角，w,h 為寬高。\n'+
+    '只輸出純 JSON：{"regions":[{"text":"內容","x":120,"y":40,"w":600,"h":80}]}，無文字則 {"regions":[]}。不要任何說明或 markdown。';
 
   try{
     emAddLog('🤖 AI 辨識中…','linf');
@@ -1338,7 +1366,7 @@ emAnalyzeBtn.addEventListener('click', async()=>{
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:800,
+        max_tokens:2000,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
           {type:'text',text:prompt}
@@ -1349,9 +1377,21 @@ emAnalyzeBtn.addEventListener('click', async()=>{
     const raw=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
     emAddLog('📥 收到回應','linf');
     let parsed;
-    try{parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());}
-    catch(pe){emAddLog('⚠️ 格式解析失敗','lwrn');emSetStatus('err','解析失敗，請重試');emAnalyzeBtn.disabled=false;emAnalyzeBtn.innerHTML='🔍 重新分析';return;}
-    emRegions=(parsed.regions||[]).filter(r=>r.w>0&&r.h>0);
+    try{
+      const m=raw.replace(/```json|```/g,'').match(/\{[\s\S]*\}/);
+      parsed=JSON.parse(m?m[0]:raw);
+    }catch(pe){emAddLog('⚠️ 格式解析失敗','lwrn');emSetStatus('err','解析失敗，請重試');emAnalyzeBtn.disabled=false;emAnalyzeBtn.innerHTML='🔍 重新分析';return;}
+    const TW=tmpC.width, TH=tmpC.height;
+    emRegions=(parsed.regions||[]).map(r=>{
+      let x=+r.x,y=+r.y,w=+r.w,h=+r.h;
+      // 相容：若 AI 仍回傳 0–1 比例座標
+      if(x<=1&&y<=1&&w<=1&&h<=1){x*=TW;y*=TH;w*=TW;h*=TH;}
+      // 保險邊距：AI 框常偏小，四周各外擴 h 的 15%
+      const pad=Math.max(4,h*0.15);
+      x-=pad;y-=pad;w+=pad*2;h+=pad*2;
+      x=clamp(x,0,TW);y=clamp(y,0,TH);w=Math.min(w,TW-x);h=Math.min(h,TH-y);
+      return {text:r.text,x:x/TW,y:y/TH,w:w/TW,h:h/TH};
+    }).filter(r=>r.w>0.005&&r.h>0.005);
     emAddLog('✅ 找到 '+emRegions.length+' 個文字區域','lok');
     renderEmRegions();
     document.getElementById('em-regions-card').style.display='block';
@@ -1526,115 +1566,6 @@ document.getElementById('em-add-region-btn').addEventListener('click',function()
   document.getElementById('em-regions-card').style.display='block';
 });
 
-// ── Erase ──
-emEraseBtn.addEventListener('click',()=>{
-  if(!emWorkImg||!emRegions.length)return;
-  emSetStatus('active','清除中…');
-  const img=emWorkImg.img;
-  const W=img.width,H=img.height;
-
-  // ── 關鍵：計算 canvas 在螢幕上的實際渲染區域 ──
-  // emCanvas 的 CSS 寬度 < 原圖寬度，且 object-fit 可能留黑邊
-  // 用 getBoundingClientRect 取得 canvas 元素的 CSS 顯示尺寸
-  const canvasRect = emCanvas.getBoundingClientRect();
-  const cssW = canvasRect.width;   // canvas 元素在螢幕上的 CSS 寬度
-  const cssH = canvasRect.height;  // canvas 元素在螢幕上的 CSS 高度
-
-  // canvas 內部解析度 vs CSS 顯示尺寸的比例
-  // emCanvas.width / cssW = 原圖像素 / CSS像素
-  const scaleX = W / cssW;
-  const scaleY = H / cssH;
-
-  // overlay div 尺寸 = canvas CSS 尺寸（inset:0）
-  // 所以 r.x, r.y, r.w, r.h 都是相對於 overlay (= canvas CSS尺寸) 的比例
-  // 換算到原圖像素：r.x * cssW * scaleX = r.x * W ✓
-  // 但若圖片有 letterbox（黑邊），object-fit:contain 會讓實際影像不填滿整個 canvas
-  // 我們 openEraser 時設 emCanvas.width=img.width, emCanvas.height=img.height
-  // 且 CSS max-height:45vh 用 width:100%，所以 canvas 元素尺寸
-  // 會按比例縮放，不會有 letterbox，r.x*W 應該是對的
-  // 真正的 bug：overlay 的 % 是相對於 overlay 容器（em-preview），
-  // 而 em-canvas 用 display:block;width:100% 撐滿 em-preview
-  // 所以 overlay 和 canvas 完全對齊，r.x*W 換算是正確的
-  //
-  // 實際 bug：使用者拖移框框時，getOverlayRect() 回傳的是
-  // emOverlay 的 bounding rect，而 dx/dy 除以 rect.width/height
-  // 這是 CSS 像素，但 r.x 是 0-1 的比例，這部分正確
-  //
-  // 真正問題：emCanvas.width 設成原圖 width，但圖片被 CSS 縮小顯示
-  // max-height:45vh 可能讓 canvas 的 CSS height < CSS width 應有的比例
-  // 造成 canvas CSS 寬高比 ≠ 原圖寬高比，overlay 的 % 位置就錯了
-  //
-  // 解法：改用 overlay 的實際 CSS 尺寸做比例換算
-
-  const overlayRect = emOverlay.getBoundingClientRect();
-  const ovW = overlayRect.width;
-  const ovH = overlayRect.height;
-
-  const wc=document.createElement('canvas');wc.width=W;wc.height=H;
-  const wCtx=wc.getContext('2d');wCtx.drawImage(img,0,0);
-  const id=wCtx.getImageData(0,0,W,H);
-
-  emRegions.forEach(r=>{
-    // r.x, r.y, r.w, r.h 是相對於 overlay CSS 尺寸的比例 (0-1)
-    // overlay CSS 尺寸 = ovW x ovH
-    // 原圖像素尺寸 = W x H
-    // 換算：像素x = r.x * ovW / ovW * W = r.x * W（若 ovW/W = 1:1 比例）
-    // 但 ovW ≠ W（ovW 是 CSS px，W 是原圖 px）
-    // 需要考慮 canvas 的 object-fit，即圖片在 canvas 內的實際顯示偏移
-
-    // canvas 元素 CSS 尺寸
-    const cvW = canvasRect.width;
-    const cvH = canvasRect.height;
-
-    // 原圖在 canvas 內的縮放比（contain 模式）
-    const imgAspect = W / H;
-    const cvAspect  = cvW / cvH;
-    let renderW, renderH, offsetX=0, offsetY=0;
-    if(imgAspect > cvAspect){
-      // 寬度貼齊，上下有黑邊
-      renderW = cvW;
-      renderH = cvW / imgAspect;
-      offsetY = (cvH - renderH) / 2;
-    } else {
-      // 高度貼齊，左右有黑邊
-      renderH = cvH;
-      renderW = cvH * imgAspect;
-      offsetX = (cvW - renderW) / 2;
-    }
-
-    // overlay 的 % 是相對於 overlay 整體（= canvas CSS 尺寸）
-    // 先換算回 CSS px，減去黑邊 offset，再換算到原圖像素
-    const cssPxX = r.x * cvW - offsetX;
-    const cssPxY = r.y * cvH - offsetY;
-    const cssPxW = r.w * cvW;
-    const cssPxH = r.h * cvH;
-
-    // 換算到原圖像素
-    const pxScale = W / renderW;  // 原圖像素 / 渲染CSS像素
-    const rx = Math.max(0, Math.floor(cssPxX * pxScale));
-    const ry = Math.max(0, Math.floor(cssPxY * pxScale));
-    const rw = Math.min(W - rx, Math.ceil(cssPxW * pxScale));
-    const rh = Math.min(H - ry, Math.ceil(cssPxH * pxScale));
-
-    if(rw<=0||rh<=0) return;
-    if(emAlgo==='blur') emGaussBlur(id,W,H,rx,ry,rw,rh,18);
-    else if(emAlgo==='mean') emMeanFill(id,W,H,rx,ry,rw,rh);
-    else emInpaint(id,W,H,rx,ry,rw,rh,3);
-  });
-
-  wCtx.putImageData(id,0,0);
-  // show result
-  const bc=document.getElementById('em-before'),ac=document.getElementById('em-after');
-  bc.width=W;bc.height=H;bc.getContext('2d').drawImage(img,0,0);
-  ac.width=W;ac.height=H;ac.getContext('2d').drawImage(wc,0,0);
-  document.getElementById('em-compare-card').style.display='block';
-  emApplyBtn.style.display='flex';
-  emSetStatus('done','清除完成！確認後點「套用」');
-  emAddLog('✅ 文字清除完成','lok');
-  emWorkImg._cleaned=wc;
-  document.getElementById('em-compare-card').scrollIntoView({behavior:'smooth',block:'nearest'});
-});
-
 // ── Apply cleaned image back to gallery ──
 emApplyBtn.addEventListener('click',()=>{
   if(!emWorkImg||!emWorkImg._cleaned)return;
@@ -1652,51 +1583,238 @@ emApplyBtn.addEventListener('click',()=>{
   newImg.src=wc.toDataURL('image/jpeg',0.92);
 });
 
-// ── Inpaint algorithms ──
-function emInpaint(id,W,H,rx,ry,rw,rh,passes){
-  const d=id.data;
-  const PAD=Math.max(5,Math.round(Math.min(rw,rh)*0.18));
-  for(let p=0;p<passes*2;p++){
-    for(let y=ry;y<ry+rh;y++){for(let x=rx;x<rx+rw;x++){
-      let r=0,g=0,b=0,wt=0;const sr=PAD+3;
-      for(let dy=-sr;dy<=sr;dy++){for(let dx=-sr;dx<=sr;dx++){
-        const nx=x+dx,ny=y+dy;
-        if(nx<0||nx>=W||ny<0||ny>=H)continue;
-        if(nx>=rx&&nx<rx+rw&&ny>=ry&&ny<ry+rh){
-          if(!(nx<rx+PAD||nx>=rx+rw-PAD||ny<ry+PAD||ny>=ry+rh-PAD))continue;
-        }
-        const w2=1/(Math.abs(dx)+Math.abs(dy)+1);
-        const i2=(ny*W+nx)*4;r+=d[i2]*w2;g+=d[i2+1]*w2;b+=d[i2+2]*w2;wt+=w2;
-      }}
-      if(wt>0){const i2=(y*W+x)*4;d[i2]=r/wt;d[i2+1]=g/wt;d[i2+2]=b/wt;}
-    }}
+// ── Erase ──
+// 流程：AI 粗框 → 框內自動分出「文字筆畫」遮罩（顏色分群 + 與框外背景比對）→ 遮罩外擴蓋住描邊/反鋸齒
+//      → 由外往內逐層修補（onion-peel inpaint）→ 邊界柔化 + 補回背景顆粒感
+emEraseBtn.addEventListener('click',()=>{
+  if(!emWorkImg||!emRegions.length)return;
+  emSetStatus('active','清除中…');
+  emEraseBtn.disabled=true;
+  // 讓狀態先畫出來再做重運算
+  setTimeout(()=>{
+    try{ emDoErase(); }
+    catch(e){ emAddLog('❌ 清除失敗：'+e.message,'lwrn'); emSetStatus('err','清除失敗'); }
+    emEraseBtn.disabled=false;
+  },30);
+});
+
+function emDoErase(){
+  const img=emWorkImg.img;
+  const W=img.width,H=img.height;
+  const wc=document.createElement('canvas');wc.width=W;wc.height=H;
+  const wCtx=wc.getContext('2d');wCtx.drawImage(img,0,0);
+  const id=wCtx.getImageData(0,0,W,H);
+
+  // overlay 與 canvas 已嚴格等比（emFitPreview），比例座標直接乘原圖尺寸即可
+  const rects=emRegions.map(r=>{
+    const x=Math.max(0,Math.floor(r.x*W)), y=Math.max(0,Math.floor(r.y*H));
+    return {x, y, w:Math.min(W-x,Math.ceil(r.w*W)), h:Math.min(H-y,Math.ceil(r.h*H))};
+  }).filter(r=>r.w>1&&r.h>1);
+
+  const t0=Date.now();
+  const res=emEraseCore(id,W,H,rects,emAlgo,emDilate);
+  wCtx.putImageData(id,0,0);
+  emAddLog('⏱️ '+(Date.now()-t0)+'ms，修補 '+res.filled+' 像素'+(res.fallback?'（'+res.fallback+' 處改用整框）':''),'linf');
+
+  // 處理前：疊上紅色遮罩，讓使用者看到哪些像素被判定為文字
+  const bc=document.getElementById('em-before'),ac=document.getElementById('em-after');
+  bc.width=W;bc.height=H;const bctx=bc.getContext('2d');bctx.drawImage(img,0,0);
+  if(res.mask){
+    const ov=bctx.getImageData(0,0,W,H),od=ov.data,M=res.mask;
+    for(let i=0;i<M.length;i++) if(M[i]){const j=i*4;od[j]=(od[j]+255*2)/3;od[j+1]=od[j+1]/3;od[j+2]=od[j+2]/3;}
+    bctx.putImageData(ov,0,0);
   }
+  ac.width=W;ac.height=H;ac.getContext('2d').drawImage(wc,0,0);
+  document.getElementById('em-compare-card').style.display='block';
+  emApplyBtn.style.display='flex';
+  emSetStatus('done','清除完成！有殘影可調「筆畫擴張」再清一次');
+  emAddLog('✅ 文字清除完成','lok');
+  emWorkImg._cleaned=wc;
+  document.getElementById('em-compare-card').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
+// 純運算核心（不碰 DOM）：直接改寫 id.data，回傳 {mask, filled, fallback}
+function emEraseCore(id,W,H,rects,algo,dilLevel){
+  const d=id.data;
+  if(algo==='blur'){
+    rects.forEach(b=>emGaussBlur(id,W,H,b.x,b.y,b.w,b.h,Math.max(6,Math.round(b.h*0.25))));
+    return {mask:null,filled:0,fallback:0};
+  }
+  const M=new Uint8Array(W*H);
+  const dilMul=[0.5,1,1.6,2.4][dilLevel==null?1:dilLevel];
+  let fallback=0;
+  const regionInfo=[];
+  rects.forEach(b=>{
+    const lineH=Math.min(b.w,b.h);
+    const ring=Math.max(4,Math.round(lineH*0.15));
+    const sigma=emNoiseSigma(d,W,H,b,ring);
+    regionInfo.push({b,sigma});
+    if(algo==='box'){ emFillRect(M,W,b); return; }
+    const ok=emSmartMask(d,M,W,H,b,ring,Math.max(1,Math.round(lineH*0.06*dilMul)));
+    if(!ok){ emFillRect(M,W,b); fallback++; }
+  });
+  const filled=emOnionInpaint(d,M,W,H);
+  emSmoothAndGrain(d,M,W,H,regionInfo);
+  return {mask:M,filled,fallback};
+}
+
+function emFillRect(M,W,b){
+  for(let y=b.y;y<b.y+b.h;y++){const o=y*W;for(let x=b.x;x<b.x+b.w;x++)M[o+x]=1;}
+}
+
+// 框內 k-means 分 4 群；在「框外一圈背景」中很少出現的顏色群 = 文字
+function emSmartMask(d,M,W,H,b,ring,dil){
+  const K=4, area=b.w*b.h;
+  const step=Math.max(1,Math.floor(Math.sqrt(area/15000)));
+  const sp=[];
+  for(let y=b.y;y<b.y+b.h;y+=step)for(let x=b.x;x<b.x+b.w;x+=step){const i=(y*W+x)*4;sp.push(d[i],d[i+1],d[i+2]);}
+  const n=sp.length/3; if(n<K*4)return false;
+  // k-means++ 簡化：第一個取中位，其餘取最遠點
+  const C=new Float32Array(K*3);
+  C[0]=sp[0];C[1]=sp[1];C[2]=sp[2];
+  for(let k=1;k<K;k++){
+    let best=-1,bi=0;
+    for(let i=0;i<n;i++){let mn=1e9;for(let j=0;j<k;j++){const dr=sp[i*3]-C[j*3],dg=sp[i*3+1]-C[j*3+1],db=sp[i*3+2]-C[j*3+2];const dd=dr*dr+dg*dg+db*db;if(dd<mn)mn=dd;}if(mn>best){best=mn;bi=i;}}
+    C[k*3]=sp[bi*3];C[k*3+1]=sp[bi*3+1];C[k*3+2]=sp[bi*3+2];
+  }
+  const near=(r,g,bl)=>{let mn=1e9,mk=0;for(let k=0;k<K;k++){const dr=r-C[k*3],dg=g-C[k*3+1],db=bl-C[k*3+2];const dd=dr*dr+dg*dg+db*db;if(dd<mn){mn=dd;mk=k;}}return mk;};
+  for(let it=0;it<10;it++){
+    const S=new Float64Array(K*4);
+    for(let i=0;i<n;i++){const k=near(sp[i*3],sp[i*3+1],sp[i*3+2]);S[k*4]+=sp[i*3];S[k*4+1]+=sp[i*3+1];S[k*4+2]+=sp[i*3+2];S[k*4+3]++;}
+    for(let k=0;k<K;k++)if(S[k*4+3]){C[k*3]=S[k*4]/S[k*4+3];C[k*3+1]=S[k*4+1]/S[k*4+3];C[k*3+2]=S[k*4+2]/S[k*4+3];}
+  }
+  const boxCnt=new Float64Array(K);
+  for(let i=0;i<n;i++)boxCnt[near(sp[i*3],sp[i*3+1],sp[i*3+2])]++;
+  // 框外背景環
+  const ringCnt=new Float64Array(K);let rn=0;
+  const x0=Math.max(0,b.x-ring),x1=Math.min(W,b.x+b.w+ring),y0=Math.max(0,b.y-ring),y1=Math.min(H,b.y+b.h+ring);
+  const rstep=Math.max(1,Math.floor(Math.sqrt(((x1-x0)*(y1-y0)-area)/8000)));
+  for(let y=y0;y<y1;y+=rstep)for(let x=x0;x<x1;x+=rstep){
+    if(x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h)continue;
+    const i=(y*W+x)*4;ringCnt[near(d[i],d[i+1],d[i+2])]++;rn++;
+  }
+  if(!rn)return false;
+  const isText=new Uint8Array(K);let any=false,bestR=1e9,bestK=-1;
+  for(let k=0;k<K;k++){
+    const bs=boxCnt[k]/n, rs=ringCnt[k]/rn;
+    if(bs<0.01)continue;
+    const ratio=rs/bs;
+    if(ratio<0.3){isText[k]=1;any=true;}
+    if(ratio<bestR){bestR=ratio;bestK=k;}
+  }
+  if(!any){ if(bestK<0||bestR>0.8)return false; isText[bestK]=1; }
+  // 標記並外擴（可分離 max filter）
+  const bw=b.w,bh=b.h,L=new Uint8Array(bw*bh);let cnt=0;
+  for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const i=((b.y+y)*W+b.x+x)*4;if(isText[near(d[i],d[i+1],d[i+2])]){L[y*bw+x]=1;cnt++;}}
+  if(cnt/(bw*bh)>0.7)return false;  // 幾乎整框都是「文字」→ 分群失敗
+  if(cnt===0)return false;
+  // 外擴範圍可略超出框（描邊/陰影常溢出），用擴大畫布處理
+  const EW=bw+dil*2,EH=bh+dil*2,E=new Uint8Array(EW*EH),T=new Uint8Array(EW*EH);
+  for(let y=0;y<bh;y++)for(let x=0;x<bw;x++)if(L[y*bw+x])E[(y+dil)*EW+x+dil]=1;
+  for(let y=0;y<EH;y++){let last=-1e9;const o=y*EW;
+    for(let x=0;x<EW;x++){if(E[o+x])last=x;if(x-last<=dil)T[o+x]=1;}
+    last=1e9;for(let x=EW-1;x>=0;x--){if(E[o+x])last=x;if(last-x<=dil)T[o+x]=1;}}
+  E.fill(0);
+  for(let x=0;x<EW;x++){let last=-1e9;
+    for(let y=0;y<EH;y++){if(T[y*EW+x])last=y;if(y-last<=dil)E[y*EW+x]=1;}
+    last=1e9;for(let y=EH-1;y>=0;y--){if(T[y*EW+x])last=y;if(last-y<=dil)E[y*EW+x]=1;}}
+  for(let y=0;y<EH;y++){const gy=b.y+y-dil;if(gy<0||gy>=H)continue;
+    for(let x=0;x<EW;x++){const gx=b.x+x-dil;if(gx<0||gx>=W)continue;if(E[y*EW+x])M[gy*W+gx]=1;}}
+  return true;
+}
+
+// 背景顆粒強度：框外環相鄰像素亮度差的中位數
+function emNoiseSigma(d,W,H,b,ring){
+  const diffs=[];
+  const y0=Math.max(0,b.y-ring),y1=Math.min(H,b.y+b.h+ring),x0=Math.max(0,b.x-ring),x1=Math.min(W-1,b.x+b.w+ring);
+  for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){
+    if(x>=b.x-1&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h)continue;
+    const i=(y*W+x)*4,j=i+4;
+    diffs.push(Math.abs((d[i]+d[i+1]+d[i+2])-(d[j]+d[j+1]+d[j+2]))/3);
+  }
+  if(!diffs.length)return 0;
+  diffs.sort((a,b)=>a-b);
+  return Math.min(14,diffs[diffs.length>>1]*1.05);
+}
+
+// 由外往內逐層填補：每個待補像素取半徑 3 內「已知」像素的距離加權平均
+function emOnionInpaint(d,M,W,H){
+  const known=new Uint8Array(W*H);
+  for(let i=0;i<M.length;i++)known[i]=M[i]?0:1;
+  const queued=new Uint8Array(W*H);
+  let front=[];
+  for(let i=0;i<M.length;i++){
+    if(!M[i])continue;
+    const x=i%W,y=(i-x)/W;
+    if((x>0&&known[i-1])||(x<W-1&&known[i+1])||(y>0&&known[i-W])||(y<H-1&&known[i+W])){front.push(i);queued[i]=1;}
+  }
+  const R=3,WT=[];
+  for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){if(!dx&&!dy)continue;const r2=dx*dx+dy*dy;if(r2<=R*R+1)WT.push(dx,dy,1/r2);}
+  let filled=0;
+  while(front.length){
+    const vals=new Float32Array(front.length*3);
+    for(let f=0;f<front.length;f++){
+      const i=front[f],x=i%W,y=(i-x)/W;
+      let r=0,g=0,bl=0,wt=0;
+      for(let k=0;k<WT.length;k+=3){
+        const nx=x+WT[k],ny=y+WT[k+1];
+        if(nx<0||nx>=W||ny<0||ny>=H)continue;
+        const j=ny*W+nx;if(!known[j])continue;
+        const w=WT[k+2],p=j*4;r+=d[p]*w;g+=d[p+1]*w;bl+=d[p+2]*w;wt+=w;
+      }
+      if(wt){vals[f*3]=r/wt;vals[f*3+1]=g/wt;vals[f*3+2]=bl/wt;}
+      else{const p=i*4;vals[f*3]=d[p];vals[f*3+1]=d[p+1];vals[f*3+2]=d[p+2];}
+    }
+    const next=[];
+    for(let f=0;f<front.length;f++){
+      const i=front[f],p=i*4;d[p]=vals[f*3];d[p+1]=vals[f*3+1];d[p+2]=vals[f*3+2];known[i]=1;filled++;
+    }
+    for(let f=0;f<front.length;f++){
+      const i=front[f],x=i%W;
+      const nb=[x>0?i-1:-1,x<W-1?i+1:-1,i-W,i+W];
+      for(const j of nb){if(j<0||j>=M.length)continue;if(M[j]&&!queued[j]){queued[j]=1;next.push(j);}}
+    }
+    front=next;
+  }
+  return filled;
+}
+
+// 修補區 3×3 柔化兩次，再補回與周圍相當的顆粒，避免出現「一塊太光滑的補丁」
+function emSmoothAndGrain(d,M,W,H,regionInfo){
+  for(let pass=0;pass<2;pass++){
+    const src=new Uint8ClampedArray(d);
+    for(let i=0;i<M.length;i++){
+      if(!M[i])continue;const x=i%W,y=(i-x)/W;
+      let r=0,g=0,b=0,c=0;
+      for(let dy=-1;dy<=1;dy++){const ny=y+dy;if(ny<0||ny>=H)continue;
+        for(let dx=-1;dx<=1;dx++){const nx=x+dx;if(nx<0||nx>=W)continue;const p=(ny*W+nx)*4;r+=src[p];g+=src[p+1];b+=src[p+2];c++;}}
+      const p=i*4;d[p]=r/c;d[p+1]=g/c;d[p+2]=b/c;
+    }
+  }
+  regionInfo.forEach(({b,sigma})=>{
+    if(sigma<0.8)return;
+    const pad=Math.round(b.h*0.3)+4;
+    const y0=Math.max(0,b.y-pad),y1=Math.min(H,b.y+b.h+pad),x0=Math.max(0,b.x-pad),x1=Math.min(W,b.x+b.w+pad);
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+      const i=y*W+x;if(M[i]!==1)continue;M[i]=2; // 2 = 已加顆粒，避免重疊框重複加
+      const u=Math.random()||1e-9,v=Math.random();
+      const nz=Math.sqrt(-2*Math.log(u))*Math.cos(6.283185*v)*sigma*0.8;
+      const p=i*4;d[p]+=nz;d[p+1]+=nz;d[p+2]+=nz;
+    }
+  });
+  for(let i=0;i<M.length;i++)if(M[i])M[i]=1;
+}
+
 function emGaussBlur(id,W,H,rx,ry,rw,rh,rad){
   const d=id.data,tmp=new Uint8ClampedArray(d),r=Math.round(rad);
   for(let y=ry;y<ry+rh;y++){for(let x=rx;x<rx+rw;x++){
     let rv=0,gv=0,bv=0,wt=0;
-    for(let dy=-r;dy<=r;dy++){for(let dx=-r;dx<=r;dx++){
+    for(let dy=-r;dy<=r;dy+=2){for(let dx=-r;dx<=r;dx+=2){
       const nx=Math.min(W-1,Math.max(0,x+dx)),ny=Math.min(H-1,Math.max(0,y+dy));
       const g2=Math.exp(-(dx*dx+dy*dy)/(2*r*r));
       const i2=(ny*W+nx)*4;rv+=tmp[i2]*g2;gv+=tmp[i2+1]*g2;bv+=tmp[i2+2]*g2;wt+=g2;
     }}
     const i2=(y*W+x)*4;d[i2]=rv/wt;d[i2+1]=gv/wt;d[i2+2]=bv/wt;
-  }}
-}
-function emMeanFill(id,W,H,rx,ry,rw,rh){
-  const d=id.data,PAD=Math.max(8,Math.round(Math.min(rw,rh)*0.22));
-  let r=0,g=0,b=0,cnt=0;
-  for(let y=Math.max(0,ry-PAD);y<Math.min(H,ry+rh+PAD);y++){
-    for(let x=Math.max(0,rx-PAD);x<Math.min(W,rx+rw+PAD);x++){
-      if(x>=rx&&x<rx+rw&&y>=ry&&y<ry+rh)continue;
-      const i2=(y*W+x)*4;r+=d[i2];g+=d[i2+1];b+=d[i2+2];cnt++;
-    }
-  }
-  if(!cnt)return;
-  const fr=r/cnt,fg=g/cnt,fb=b/cnt;
-  for(let y=ry;y<ry+rh;y++){for(let x=rx;x<rx+rw;x++){
-    const i2=(y*W+x)*4;d[i2]=fr;d[i2+1]=fg;d[i2+2]=fb;
   }}
 }
 
