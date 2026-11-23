@@ -330,7 +330,7 @@ input[type=range]::-webkit-slider-thumb{
   display:none;position:fixed;inset:0;z-index:500;
   background:rgba(0,0,0,.85);
   flex-direction:column;align-items:center;
-  overflow-y:auto;padding:16px 14px 100px;
+  overflow-y:auto;padding:16px 14px 260px;
 }
 #eraser-modal.open{display:flex;}
 .em-card{
@@ -353,6 +353,10 @@ input[type=range]::-webkit-slider-thumb{
 /* preview inside modal */
 .em-preview{position:relative;border-radius:8px;overflow:hidden;background:#000;margin-bottom:10px;}
 #em-canvas{display:block;width:100%;height:auto;}
+.em-card{flex-shrink:0;}
+.em-compare{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.em-compare-col{min-width:0;}
+.em-compare canvas{display:block;width:100%;height:auto;border-radius:6px;background:#000;}
 .em-dil-row{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--text);margin:4px 0 2px;}
 .em-dil-row input{flex:1;accent-color:#00d4ff;}
 .em-overlay{position:absolute;inset:0;pointer-events:all;}
@@ -1639,34 +1643,50 @@ emEraseBtn.addEventListener('click',()=>{
 function emDoErase(){
   const img=emWorkImg.img;
   const W=img.width,H=img.height;
-  const wc=document.createElement('canvas');wc.width=W;wc.height=H;
-  const wCtx=wc.getContext('2d');wCtx.drawImage(img,0,0);
-  const id=wCtx.getImageData(0,0,W,H);
-
-  // overlay 與 canvas 已嚴格等比（emFitPreview），比例座標直接乘原圖尺寸即可
   const rects=emRegions.map(r=>{
     const x=Math.max(0,Math.floor(r.x*W)), y=Math.max(0,Math.floor(r.y*H));
     return {x, y, w:Math.min(W-x,Math.ceil(r.w*W)), h:Math.min(H-y,Math.ceil(r.h*H))};
   }).filter(r=>r.w>1&&r.h>1);
+  if(!rects.length)return;
+
+  // 只處理「所有框的聯集 + 邊距」這一塊，避免整張高解析度圖複製多份讓 iOS 記憶體爆掉
+  const maxH=Math.max(...rects.map(r=>Math.min(r.w,r.h)));
+  const m=Math.round(maxH*0.6)+16;
+  const cx=Math.max(0,Math.min(...rects.map(r=>r.x))-m), cy=Math.max(0,Math.min(...rects.map(r=>r.y))-m);
+  const cx2=Math.min(W,Math.max(...rects.map(r=>r.x+r.w))+m), cy2=Math.min(H,Math.max(...rects.map(r=>r.y+r.h))+m);
+  const CW=cx2-cx, CH=cy2-cy;
+  const local=rects.map(r=>({x:r.x-cx,y:r.y-cy,w:r.w,h:r.h}));
+
+  const wc=document.createElement('canvas');wc.width=W;wc.height=H;
+  const wCtx=wc.getContext('2d');wCtx.drawImage(img,0,0);
+  const id=wCtx.getImageData(cx,cy,CW,CH);
+  const orig=new Uint8ClampedArray(id.data);
 
   const t0=Date.now();
-  const res=emEraseCore(id,W,H,rects,emAlgo,emDilate);
-  wCtx.putImageData(id,0,0);
-  emAddLog('⏱️ '+(Date.now()-t0)+'ms，修補 '+res.filled+' 像素'+(res.fallback?'（'+res.fallback+' 處改用整框）':''),'linf');
+  const res=emEraseCore(id,CW,CH,local,emAlgo,emDilate);
+  wCtx.putImageData(id,cx,cy);
+  emAddLog('⏱️ '+(Date.now()-t0)+'ms，處理範圍 '+CW+'×'+CH+'，修補 '+res.filled+' 像素'+(res.fallback?'（'+res.fallback+' 處改用整框）':''),'linf');
 
-  // 處理前：疊上紅色遮罩，讓使用者看到哪些像素被判定為文字
+  // 對比圖只用縮圖（長邊 ≤ 720px）
+  const ps=Math.min(1,720/Math.max(W,H));
+  const PW=Math.round(W*ps),PH=Math.round(H*ps);
   const bc=document.getElementById('em-before'),ac=document.getElementById('em-after');
-  bc.width=W;bc.height=H;const bctx=bc.getContext('2d');bctx.drawImage(img,0,0);
+  bc.width=PW;bc.height=PH;const bctx=bc.getContext('2d');bctx.drawImage(img,0,0,PW,PH);
   if(res.mask){
-    const ov=bctx.getImageData(0,0,W,H),od=ov.data,M=res.mask;
-    for(let i=0;i<M.length;i++) if(M[i]){const j=i*4;od[j]=(od[j]+255*2)/3;od[j+1]=od[j+1]/3;od[j+2]=od[j+2]/3;}
-    bctx.putImageData(ov,0,0);
+    // 遮罩疊色只做在處理範圍那一塊，再縮放貼上
+    const mk=document.createElement('canvas');mk.width=CW;mk.height=CH;
+    const mctx=mk.getContext('2d'),od=new ImageData(orig,CW,CH),dd=od.data,M=res.mask;
+    for(let i=0;i<M.length;i++) if(M[i]){const j=i*4;dd[j]=(dd[j]+510)/3;dd[j+1]=dd[j+1]/3;dd[j+2]=dd[j+2]/3;}
+    mctx.putImageData(od,0,0);
+    bctx.drawImage(mk,cx*ps,cy*ps,CW*ps,CH*ps);
+    mk.width=mk.height=0;
   }
-  ac.width=W;ac.height=H;ac.getContext('2d').drawImage(wc,0,0);
+  ac.width=PW;ac.height=PH;ac.getContext('2d').drawImage(wc,0,0,PW,PH);
   document.getElementById('em-compare-card').style.display='block';
   emApplyBtn.style.display='flex';
   emSetStatus('done','清除完成！有殘影可調「筆畫擴張」再清一次');
   emAddLog('✅ 文字清除完成','lok');
+  if(emWorkImg._cleaned&&emWorkImg._cleaned!==wc){emWorkImg._cleaned.width=emWorkImg._cleaned.height=0;}
   emWorkImg._cleaned=wc;
   document.getElementById('em-compare-card').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
